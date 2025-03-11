@@ -1,4 +1,6 @@
-import { Task, InsertTask, User, TaskStatus } from "@shared/schema";
+import { Task, InsertTask, User, tasks, users, TaskStatus } from "@shared/schema";
+import { db } from "./db";
+import { eq } from "drizzle-orm";
 
 export interface IStorage {
   getTasks(): Promise<Task[]>;
@@ -7,34 +9,54 @@ export interface IStorage {
   getUsers(): Promise<User[]>;
 }
 
-export class MemStorage implements IStorage {
-  private tasks: Map<number, Task>;
-  private users: Map<number, User>;
-  private taskId: number;
+export class DatabaseStorage implements IStorage {
+  async getTasks(): Promise<Task[]> {
+    return await db.select().from(tasks);
+  }
 
-  constructor() {
-    this.tasks = new Map();
-    this.users = new Map();
-    this.taskId = 1;
+  async createTask(task: InsertTask): Promise<Task> {
+    const [newTask] = await db.insert(tasks).values(task).returning();
+    return newTask;
+  }
 
-    // Add sample users
-    const sampleUsers: User[] = [
-      { id: 1, name: "John Doe", avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=John" },
-      { id: 2, name: "Jane Smith", avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Jane" },
-      { id: 3, name: "Bob Wilson", avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Bob" }
+  async updateTask(id: number, updates: Partial<Task>): Promise<Task> {
+    const [updatedTask] = await db
+      .update(tasks)
+      .set(updates)
+      .where(eq(tasks.id, id))
+      .returning();
+
+    if (!updatedTask) {
+      throw new Error(`Task with id ${id} not found`);
+    }
+
+    return updatedTask;
+  }
+
+  async getUsers(): Promise<User[]> {
+    return await db.select().from(users);
+  }
+
+  // Inicializar datos de ejemplo
+  async initializeSampleData() {
+    // Insertar usuarios de ejemplo
+    const sampleUsers = [
+      { name: "John Doe", avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=John" },
+      { name: "Jane Smith", avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Jane" },
+      { name: "Bob Wilson", avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Bob" }
     ];
 
-    sampleUsers.forEach(user => this.users.set(user.id, user));
+    const insertedUsers = await db.insert(users).values(sampleUsers).returning();
 
-    // Add sample tasks
-    const sampleTasks: InsertTask[] = [
+    // Insertar tareas de ejemplo
+    const sampleTasks = [
       {
         title: "Design System Update",
         description: "Review reusable design elements and components for consistent branding",
         status: TaskStatus.TODO,
         progress: 0,
         dueDate: new Date("2024-04-01"),
-        assignedUserIds: [1, 2]
+        assignedUserIds: [insertedUsers[0].id, insertedUsers[1].id]
       },
       {
         title: "Frontend Development",
@@ -42,39 +64,17 @@ export class MemStorage implements IStorage {
         status: TaskStatus.IN_PROGRESS,
         progress: 60,
         dueDate: new Date("2024-03-25"),
-        assignedUserIds: [2, 3]
+        assignedUserIds: [insertedUsers[1].id, insertedUsers[2].id]
       }
     ];
 
-    sampleTasks.forEach(task => this.createTask(task));
-  }
-
-  async getTasks(): Promise<Task[]> {
-    return Array.from(this.tasks.values());
-  }
-
-  async createTask(task: InsertTask): Promise<Task> {
-    const newTask: Task = {
-      ...task,
-      id: this.taskId++
-    };
-    this.tasks.set(newTask.id, newTask);
-    return newTask;
-  }
-
-  async updateTask(id: number, updates: Partial<Task>): Promise<Task> {
-    const task = this.tasks.get(id);
-    if (!task) {
-      throw new Error(`Task with id ${id} not found`);
-    }
-    const updatedTask = { ...task, ...updates };
-    this.tasks.set(id, updatedTask);
-    return updatedTask;
-  }
-
-  async getUsers(): Promise<User[]> {
-    return Array.from(this.users.values());
+    await db.insert(tasks).values(sampleTasks);
   }
 }
 
-export const storage = new MemStorage();
+export const storage = new DatabaseStorage();
+
+// Inicializar datos de ejemplo si es necesario
+if (process.env.NODE_ENV === "development") {
+  storage.initializeSampleData().catch(console.error);
+}
