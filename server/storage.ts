@@ -6,6 +6,7 @@ export interface IStorage {
   getTasks(): Promise<Task[]>;
   createTask(task: InsertTask): Promise<Task>;
   updateTask(id: number, task: Partial<Task>): Promise<Task>;
+  deleteTask(id: number): Promise<void>;
   getUsers(): Promise<User[]>;
   createUser(user: { name: string, avatar: string }): Promise<User>;
   getPomodoroSessions(): Promise<PomodoroSession[]>;
@@ -18,7 +19,10 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createTask(task: InsertTask): Promise<Task> {
-    const [newTask] = await db.insert(tasks).values(task).returning();
+    const [newTask] = await db.insert(tasks).values({
+      ...task,
+      dueDate: new Date(task.dueDate)
+    }).returning();
     return newTask;
   }
 
@@ -34,6 +38,10 @@ export class DatabaseStorage implements IStorage {
     }
 
     return updatedTask;
+  }
+
+  async deleteTask(id: number): Promise<void> {
+    await db.delete(tasks).where(eq(tasks.id, id));
   }
 
   async getUsers(): Promise<User[]> {
@@ -53,8 +61,6 @@ export class DatabaseStorage implements IStorage {
     const [newSession] = await db.insert(pomodoroSessions).values(session).returning();
     return newSession;
   }
-
-  // Inicializar datos de ejemplo
   async initializeSampleData() {
     // Insertar usuarios de ejemplo
     const sampleUsers = [

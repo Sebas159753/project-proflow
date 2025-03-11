@@ -6,7 +6,10 @@ import { TaskStatus, type Task, type User } from "@shared/schema";
 import { PomodoroTimer } from "../pomodoro/pomodoro-timer";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Timer } from "lucide-react";
+import { Timer, Trash2 } from "lucide-react";
+import { useQueryClient } from "@tanstack/react-query";
+import { apiRequest } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
 
 interface TaskCardProps {
   task: Task;
@@ -15,6 +18,9 @@ interface TaskCardProps {
 
 export function TaskCard({ task, users }: TaskCardProps) {
   const [showPomodoro, setShowPomodoro] = useState(false);
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+
   const assignedUsers = users.filter(user => 
     task.assignedUserIds.includes(user.id)
   );
@@ -23,13 +29,44 @@ export function TaskCard({ task, users }: TaskCardProps) {
     // Actualizar el progreso de la tarea aquí si lo deseas
   };
 
+  const handleDelete = async () => {
+    try {
+      await apiRequest("DELETE", `/api/tasks/${task.id}`);
+
+      queryClient.invalidateQueries({ queryKey: ["/api/tasks"] });
+
+      toast({
+        title: "¡Éxito!",
+        description: "Tarea eliminada correctamente",
+        className: "bg-green-500 text-white"
+      });
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "No se pudo eliminar la tarea"
+      });
+    }
+  };
+
   // Por ahora usaremos el primer usuario asignado como el usuario activo
   const activeUserId = task.assignedUserIds[0];
 
   return (
     <Card>
       <CardContent className="p-4">
-        <h3 className="font-semibold mb-2">{task.title}</h3>
+        <div className="flex justify-between items-start mb-2">
+          <h3 className="font-semibold">{task.title}</h3>
+          <Button 
+            variant="ghost" 
+            size="sm"
+            className="text-red-500 hover:text-red-700 hover:bg-red-100"
+            onClick={handleDelete}
+          >
+            <Trash2 className="h-4 w-4" />
+          </Button>
+        </div>
+
         <p className="text-sm text-muted-foreground mb-4">
           {task.description}
         </p>

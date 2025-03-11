@@ -41,6 +41,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.delete("/api/tasks/:id", async (req, res) => {
+    const id = parseInt(req.params.id);
+    if (isNaN(id)) {
+      return res.status(400).json({ error: "ID de tarea inválido" });
+    }
+    try {
+      await storage.deleteTask(id);
+      res.status(204).send();
+    } catch (error) {
+      res.status(500).json({ 
+        error: "Error interno del servidor",
+        message: "No se pudo eliminar la tarea" 
+      });
+    }
+  });
+
   app.patch("/api/tasks/:id", async (req, res) => {
     const id = parseInt(req.params.id);
     if (isNaN(id)) {

@@ -5,6 +5,7 @@ import { Toaster } from "@/components/ui/toaster";
 import Dashboard from "@/pages/dashboard";
 import Reporting from "@/pages/reporting";
 import People from "@/pages/people";
+import Calendar from "@/pages/calendar";
 
 function Router() {
   return (
@@ -13,6 +14,7 @@ function Router() {
       <Route path="/dashboard" component={Dashboard} />
       <Route path="/reporting" component={Reporting} />
       <Route path="/people" component={People} />
+      <Route path="/calendar" component={Calendar} />
     </Switch>
   );
 }
