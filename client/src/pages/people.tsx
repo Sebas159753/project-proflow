@@ -4,7 +4,7 @@ import {
   Card, 
   CardContent
 } from "@/components/ui/card";
-import { Plus, Mail, Edit2 } from "lucide-react";
+import { Plus, Edit2 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { 
@@ -18,10 +18,13 @@ import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
+import { motion } from "framer-motion";
 
 export default function People() {
   const [showAddPerson, setShowAddPerson] = useState(false);
+  const [showEditPerson, setShowEditPerson] = useState(false);
   const [newPerson, setNewPerson] = useState({ name: "" });
+  const [editingPerson, setEditingPerson] = useState<{ id: number, name: string } | null>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -54,6 +57,33 @@ export default function People() {
     }
   }
 
+  async function handleEditPerson() {
+    if (!editingPerson) return;
+
+    try {
+      await apiRequest("PATCH", `/api/users/${editingPerson.id}`, {
+        name: editingPerson.name,
+      });
+
+      queryClient.invalidateQueries({ queryKey: ["/api/users"] });
+
+      toast({
+        title: "¡Éxito!",
+        description: "Nombre actualizado correctamente",
+        className: "bg-green-500 text-white"
+      });
+
+      setShowEditPerson(false);
+      setEditingPerson(null);
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "No se pudo actualizar el nombre"
+      });
+    }
+  }
+
   if (isLoading) {
     return <div>Cargando...</div>;
   }
@@ -72,26 +102,35 @@ export default function People() {
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {users.map((user: any) => (
-            <Card key={user.id}>
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                  <h3 className="font-semibold">{user.name}</h3>
-                  <div className="flex gap-2">
-                    <Button variant="outline" size="sm">
-                      <Mail className="h-4 w-4 mr-2" />
-                      Contactar
-                    </Button>
-                    <Button variant="outline" size="sm">
+            <motion.div
+              key={user.id}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.2 }}
+            >
+              <Card>
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between">
+                    <h3 className="font-semibold">{user.name}</h3>
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => {
+                        setEditingPerson({ id: user.id, name: user.name });
+                        setShowEditPerson(true);
+                      }}
+                    >
                       <Edit2 className="h-4 w-4 mr-2" />
                       Editar
                     </Button>
                   </div>
-                </div>
-              </CardContent>
-            </Card>
+                </CardContent>
+              </Card>
+            </motion.div>
           ))}
         </div>
 
+        {/* Diálogo para agregar persona */}
         <Dialog open={showAddPerson} onOpenChange={setShowAddPerson}>
           <DialogContent>
             <DialogHeader>
@@ -115,6 +154,39 @@ export default function People() {
                 </Button>
                 <Button onClick={handleAddPerson} className="bg-blue-600 hover:bg-blue-700 text-white">
                   Agregar Persona
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* Diálogo para editar persona */}
+        <Dialog open={showEditPerson} onOpenChange={setShowEditPerson}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Editar Persona</DialogTitle>
+              <DialogDescription>
+                Modifica el nombre de la persona
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4 py-4">
+              <div className="space-y-2">
+                <label>Nombre</label>
+                <Input
+                  value={editingPerson?.name || ""}
+                  onChange={(e) => setEditingPerson(prev => prev ? { ...prev, name: e.target.value } : null)}
+                  placeholder="Ingresa el nuevo nombre"
+                />
+              </div>
+              <div className="flex justify-end gap-3">
+                <Button variant="outline" onClick={() => {
+                  setShowEditPerson(false);
+                  setEditingPerson(null);
+                }}>
+                  Cancelar
+                </Button>
+                <Button onClick={handleEditPerson} className="bg-blue-600 hover:bg-blue-700 text-white">
+                  Guardar Cambios
                 </Button>
               </div>
             </div>
