@@ -8,7 +8,8 @@ export interface IStorage {
   updateTask(id: number, task: Partial<Task>): Promise<Task>;
   deleteTask(id: number): Promise<void>;
   getUsers(): Promise<User[]>;
-  createUser(user: { name: string, avatar: string }): Promise<User>;
+  createUser(user: { name: string }): Promise<User>;
+  updateUser(id: number, user: Partial<User>): Promise<User>;
   getPomodoroSessions(): Promise<PomodoroSession[]>;
   createPomodoroSession(session: InsertPomodoroSession): Promise<PomodoroSession>;
 }
@@ -48,9 +49,23 @@ export class DatabaseStorage implements IStorage {
     return await db.select().from(users);
   }
 
-  async createUser(user: { name: string, avatar: string }): Promise<User> {
+  async createUser(user: { name: string }): Promise<User> {
     const [newUser] = await db.insert(users).values(user).returning();
     return newUser;
+  }
+
+  async updateUser(id: number, updates: Partial<User>): Promise<User> {
+    const [updatedUser] = await db
+      .update(users)
+      .set(updates)
+      .where(eq(users.id, id))
+      .returning();
+
+    if (!updatedUser) {
+      throw new Error(`User with id ${id} not found`);
+    }
+
+    return updatedUser;
   }
 
   async getPomodoroSessions(): Promise<PomodoroSession[]> {
@@ -64,9 +79,9 @@ export class DatabaseStorage implements IStorage {
   async initializeSampleData() {
     // Insertar usuarios de ejemplo
     const sampleUsers = [
-      { name: "John Doe", avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=John" },
-      { name: "Jane Smith", avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Jane" },
-      { name: "Bob Wilson", avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Bob" }
+      { name: "John Doe" },
+      { name: "Jane Smith" },
+      { name: "Bob Wilson" }
     ];
 
     const insertedUsers = await db.insert(users).values(sampleUsers).returning();

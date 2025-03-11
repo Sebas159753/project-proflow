@@ -5,8 +5,7 @@ import { insertTaskSchema, insertPomodoroSessionSchema } from "@shared/schema";
 import { z } from "zod";
 
 const insertUserSchema = z.object({
-  name: z.string().min(1, "El nombre es requerido"),
-  avatar: z.string().url("La URL del avatar es inválida")
+  name: z.string().min(1, "El nombre es requerido")
 });
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -93,6 +92,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({
         error: "Error interno del servidor",
         message: "No se pudo crear el usuario"
+      });
+    }
+  });
+
+  // Nuevo endpoint para actualizar usuarios
+  app.patch("/api/users/:id", async (req, res) => {
+    const id = parseInt(req.params.id);
+    if (isNaN(id)) {
+      return res.status(400).json({ error: "ID de usuario inválido" });
+    }
+    try {
+      const result = insertUserSchema.partial().safeParse(req.body);
+
+      if (!result.success) {
+        return res.status(400).json({
+          error: "Datos inválidos",
+          details: result.error.errors
+        });
+      }
+
+      const user = await storage.updateUser(id, result.data);
+      res.json(user);
+    } catch (error) {
+      console.error("Error al actualizar el usuario:", error);
+      res.status(500).json({
+        error: "Error interno del servidor",
+        message: "No se pudo actualizar el usuario"
       });
     }
   });
