@@ -9,6 +9,11 @@ import { useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { TaskStatus, insertTaskSchema, type User } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
+import { Calendar } from "@/components/ui/calendar";
+import { format } from "date-fns";
+import { CalendarIcon } from "lucide-react";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { cn } from "@/lib/utils";
 
 interface NewTaskDialogProps {
   open: boolean;
@@ -19,7 +24,7 @@ interface NewTaskDialogProps {
 export function NewTaskDialog({ open, onOpenChange, users }: NewTaskDialogProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  
+
   const form = useForm({
     resolver: zodResolver(insertTaskSchema),
     defaultValues: {
@@ -34,7 +39,10 @@ export function NewTaskDialog({ open, onOpenChange, users }: NewTaskDialogProps)
 
   async function onSubmit(data: any) {
     try {
-      await apiRequest("POST", "/api/tasks", data);
+      await apiRequest("POST", "/api/tasks", {
+        ...data,
+        dueDate: data.dueDate.toISOString()
+      });
       queryClient.invalidateQueries({ queryKey: ["/api/tasks"] });
       toast({
         title: "Success",
@@ -43,6 +51,7 @@ export function NewTaskDialog({ open, onOpenChange, users }: NewTaskDialogProps)
       onOpenChange(false);
       form.reset();
     } catch (error) {
+      console.error("Error creating task:", error);
       toast({
         variant: "destructive",
         title: "Error",
@@ -82,6 +91,46 @@ export function NewTaskDialog({ open, onOpenChange, users }: NewTaskDialogProps)
                   <FormControl>
                     <Textarea {...field} />
                   </FormControl>
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="dueDate"
+              render={({ field }) => (
+                <FormItem className="flex flex-col">
+                  <FormLabel>Due Date</FormLabel>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <FormControl>
+                        <Button
+                          variant={"outline"}
+                          className={cn(
+                            "w-full pl-3 text-left font-normal",
+                            !field.value && "text-muted-foreground"
+                          )}
+                        >
+                          {field.value ? (
+                            format(field.value, "PPP")
+                          ) : (
+                            <span>Pick a date</span>
+                          )}
+                          <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                        </Button>
+                      </FormControl>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                      <Calendar
+                        mode="single"
+                        selected={field.value}
+                        onSelect={field.onChange}
+                        disabled={(date) =>
+                          date < new Date()
+                        }
+                      />
+                    </PopoverContent>
+                  </Popover>
                 </FormItem>
               )}
             />
