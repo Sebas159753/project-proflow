@@ -19,7 +19,7 @@ export function Sidebar() {
   const [location] = useLocation();
 
   return (
-    <div className="w-64 border-r bg-blue-600">
+    <div className="w-64 border-r bg-blue-800">
       <div className="p-6">
         <h1 className="text-xl font-bold text-white">
           To do Task Management

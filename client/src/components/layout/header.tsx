@@ -12,7 +12,6 @@ interface HeaderProps {
 
 export function Header({ users }: HeaderProps) {
   const [showNewTask, setShowNewTask] = useState(false);
-  const joinDate = new Date("2024-03-11"); // Fecha de ejemplo, ajustar según necesidad
 
   return (
     <div className="border-b px-6 py-3">
@@ -20,7 +19,7 @@ export function Header({ users }: HeaderProps) {
         <div>
           <h1 className="text-xl font-semibold">¡Bienvenido Sebastián..!</h1>
           <p className="text-sm text-muted-foreground">
-            Miembro desde {format(joinDate, "d 'de' MMMM, yyyy", { locale: es })}
+            Miembro desde {format(new Date(), "d 'de' MMMM, yyyy", { locale: es })}
           </p>
         </div>
         <Button onClick={() => setShowNewTask(true)} className="bg-blue-600 hover:bg-blue-700 text-white">

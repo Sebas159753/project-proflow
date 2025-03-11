@@ -12,7 +12,7 @@ interface KanbanBoardProps {
 
 // Definir el orden específico de las columnas
 const columns = [
-  { id: TaskStatus.TODO, title: "To-Do", className: "bg-card" },
+  { id: TaskStatus.TODO, title: "To-Do", className: "bg-yellow-50" }, // Changed color
   { id: TaskStatus.IN_PROGRESS, title: "On Progress", className: "bg-blue-50" },
   { id: TaskStatus.COMPLETED, title: "Completed", className: "bg-green-50" },
   { id: TaskStatus.REVIEW, title: "Under Review", className: "bg-purple-50" }
