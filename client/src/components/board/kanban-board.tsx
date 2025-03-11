@@ -5,6 +5,10 @@ import { apiRequest } from "@/lib/queryClient";
 import { TaskStatus, type Task, type User } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
 import { motion } from "framer-motion";
+import { useState, useMemo } from "react";
+import { Input } from "@/components/ui/input";
+import { Search } from "lucide-react";
+import Fuse from 'fuse.js';
 
 interface KanbanBoardProps {
   tasks: Task[];
@@ -20,11 +24,25 @@ const columns = [
 ];
 
 export function KanbanBoard({ tasks, users }: KanbanBoardProps) {
+  const [searchQuery, setSearchQuery] = useState("");
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
+  // Configurar Fuse.js para búsqueda difusa
+  const fuse = useMemo(() => new Fuse(tasks, {
+    keys: ['title', 'description'],
+    threshold: 0.4,
+    shouldSort: true
+  }), [tasks]);
+
+  // Filtrar tareas basado en la búsqueda
+  const filteredTasks = useMemo(() => {
+    if (!searchQuery) return tasks;
+    return fuse.search(searchQuery).map(result => result.item);
+  }, [searchQuery, tasks, fuse]);
+
   const getTasksByStatus = (status: string) => {
-    return tasks.filter(task => task.status === status);
+    return filteredTasks.filter(task => task.status === status);
   };
 
   const onDragEnd = async (result: any) => {
@@ -57,56 +75,68 @@ export function KanbanBoard({ tasks, users }: KanbanBoardProps) {
   };
 
   return (
-    <DragDropContext onDragEnd={onDragEnd}>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {columns.map((column, index) => (
-          <motion.div
-            key={column.id}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3, delay: index * 0.1 }}
-            className={`rounded-lg p-4 transition-all duration-300 hover:shadow-lg ${column.className}`}
-          >
-            <h3 className={`font-semibold mb-4 flex items-center ${column.id === TaskStatus.COMPLETED ? 'text-white' : 'text-gray-800'}`}>
-              {column.title}
-              <span className={`ml-2 text-sm ${column.id === TaskStatus.COMPLETED ? 'text-white/70' : 'text-gray-600'}`}>
-                ({getTasksByStatus(column.id).length})
-              </span>
-            </h3>
-            <Droppable droppableId={column.id}>
-              {(provided) => (
-                <div
-                  ref={provided.innerRef}
-                  {...provided.droppableProps}
-                  className="space-y-4 min-h-[200px]"
-                >
-                  {getTasksByStatus(column.id).map((task, index) => (
-                    <Draggable 
-                      key={task.id} 
-                      draggableId={task.id.toString()} 
-                      index={index}
-                    >
-                      {(provided, snapshot) => (
-                        <div
-                          ref={provided.innerRef}
-                          {...provided.draggableProps}
-                          {...provided.dragHandleProps}
-                          className={`transform transition-transform ${
-                            snapshot.isDragging ? "scale-105" : ""
-                          }`}
-                        >
-                          <TaskCard task={task} users={users} />
-                        </div>
-                      )}
-                    </Draggable>
-                  ))}
-                  {provided.placeholder}
-                </div>
-              )}
-            </Droppable>
-          </motion.div>
-        ))}
+    <div className="space-y-6">
+      <div className="relative">
+        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+        <Input
+          placeholder="Buscar tareas..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className="pl-9 transition-all duration-200 focus-within:ring-2 focus-within:ring-blue-500"
+        />
       </div>
-    </DragDropContext>
+
+      <DragDropContext onDragEnd={onDragEnd}>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          {columns.map((column, index) => (
+            <motion.div
+              key={column.id}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3, delay: index * 0.1 }}
+              className={`rounded-lg p-4 transition-all duration-300 hover:shadow-lg ${column.className}`}
+            >
+              <h3 className={`font-semibold mb-4 flex items-center ${column.id === TaskStatus.COMPLETED ? 'text-white' : 'text-gray-800'}`}>
+                {column.title}
+                <span className={`ml-2 text-sm ${column.id === TaskStatus.COMPLETED ? 'text-white/70' : 'text-gray-600'}`}>
+                  ({getTasksByStatus(column.id).length})
+                </span>
+              </h3>
+              <Droppable droppableId={column.id}>
+                {(provided) => (
+                  <div
+                    ref={provided.innerRef}
+                    {...provided.droppableProps}
+                    className="space-y-4 min-h-[200px]"
+                  >
+                    {getTasksByStatus(column.id).map((task, index) => (
+                      <Draggable 
+                        key={task.id} 
+                        draggableId={task.id.toString()} 
+                        index={index}
+                      >
+                        {(provided, snapshot) => (
+                          <div
+                            ref={provided.innerRef}
+                            {...provided.draggableProps}
+                            {...provided.dragHandleProps}
+                            className={`transform transition-transform ${
+                              snapshot.isDragging ? "scale-105" : ""
+                            }`}
+                          >
+                            <TaskCard task={task} users={users} />
+                          </div>
+                        )}
+                      </Draggable>
+                    ))}
+                    {provided.placeholder}
+                  </div>
+                )}
+              </Droppable>
+            </motion.div>
+          ))}
+        </div>
+      </DragDropContext>
+    </div>
   );
 }
