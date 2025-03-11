@@ -54,7 +54,7 @@ export const LogoWithText: FC<LogoProps> = ({ className = "", size = 40 }) => {
       <Logo size={size} />
       <div className="flex flex-col">
         <span className="font-bold text-xl">DataFocus</span>
-        <span className="text-xs text-muted-foreground">Oficina de Datos - BVQ</span>
+        <span className="text-xs text-white">Oficina de Datos - BVQ</span>
       </div>
     </div>
   );
