@@ -209,19 +209,19 @@ export function TaskCard({ task, users }: TaskCardProps) {
             {EMOJIS.map((emoji, index) => (
               <motion.div
                 key={index}
-                initial={{ 
+                initial={{
                   opacity: 0,
                   scale: 0,
                   y: 100,
-                  x: Math.random() * 200 - 100 
+                  x: Math.random() * 200 - 100
                 }}
-                animate={{ 
+                animate={{
                   opacity: 1,
                   scale: [1, 1.5, 1],
                   y: [-20, -40, -60],
                   x: [Math.random() * 200 - 100, Math.random() * 300 - 150]
                 }}
-                exit={{ 
+                exit={{
                   opacity: 0,
                   scale: 0,
                   y: -100
