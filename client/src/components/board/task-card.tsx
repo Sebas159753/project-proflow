@@ -14,9 +14,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Slider } from "@/components/ui/slider";
 import { EditTaskDialog } from "../dialogs/edit-task-dialog";
 import { usePoints } from "@/hooks/use-points";
-//import { Dialog, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from "@/components/ui/dialog"; //Removed
 import { cn } from "@/lib/utils";
-
 
 interface TaskCardProps {
   task: Task;
@@ -46,7 +44,6 @@ export function TaskCard({ task, users }: TaskCardProps) {
   const [isUpdating, setIsUpdating] = useState(false);
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [showCelebration, setShowCelebration] = useState(false);
-  //const [showDeleteDialog, setShowDeleteDialog] = useState(false); //Removed
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const { awardPoints } = usePoints();
@@ -69,14 +66,15 @@ export function TaskCard({ task, users }: TaskCardProps) {
 
     try {
       await apiRequest('PATCH', `/api/tasks/${task.id}`, {
-          progress: progressValue,
-          status: progressValue === 100 ? TaskStatus.COMPLETED : task.status
+        progress: progressValue,
+        status: progressValue === 100 ? TaskStatus.COMPLETED : task.status
       });
-      
-      if (progressValue === 100) {
+
+      // Si la tarea se completó, otorgar puntos al usuario asignado
+      if (progressValue === 100 && task.status !== TaskStatus.COMPLETED) {
         awardPoints(10, 'Tarea completada');
       }
-      
+
       await queryClient.invalidateQueries(['tasks']);
     } catch (error) {
       console.error("Error al actualizar el progreso:", error);
@@ -88,53 +86,23 @@ export function TaskCard({ task, users }: TaskCardProps) {
     } finally {
       setIsUpdating(false);
     }
-        }
-      });
-
-      // Si la tarea se completó, otorgar puntos al usuario asignado
-      if (progressValue === 100 && task.status !== TaskStatus.COMPLETED) {
-        const userId = task.assignedUserIds[0]; // Por ahora usamos el primer usuario asignado
-        if (userId) {
-          await awardPoints(task, userId);
-        }
-      }
-
-      await queryClient.invalidateQueries({ queryKey: ["/api/tasks"] });
-
-      toast({
-        title: "¡Éxito!",
-        description: "Progreso actualizado correctamente",
-        className: "bg-green-500 text-white"
-      });
-    } catch (error) {
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "No se pudo actualizar el progreso"
-      });
-      setProgress(task.progress); // Revertir al valor original si hay error
-    } finally {
-      setIsUpdating(false);
-    }
   };
 
   const handleDeleteTask = async () => {
     try {
       await apiRequest('DELETE', `/api/tasks/${task.id}`);
+      await queryClient.invalidateQueries(['tasks']);
 
-      queryClient.invalidateQueries({ queryKey: ["/api/tasks"] });
       toast({
         title: "Tarea eliminada",
         description: "La tarea ha sido eliminada correctamente",
-        variant: "default",
       });
-      //setShowDeleteDialog(false); //Removed
     } catch (error) {
       console.error("Error al eliminar la tarea:", error);
       toast({
         title: "Error",
         description: "No se pudo eliminar la tarea",
-        variant: "destructive",
+        variant: "destructive"
       });
     }
   };
@@ -174,34 +142,33 @@ export function TaskCard({ task, users }: TaskCardProps) {
                 variant="ghost"
                 size="sm"
                 className="text-red-500 hover:text-red-700 hover:bg-red-100 transition-colors duration-200"
-                onClick={handleDeleteTask} // Changed to directly call handleDeleteTask
+                onClick={handleDeleteTask}
               >
                 <Trash2 className="h-4 w-4" />
               </Button>
             </div>
           </div>
 
-          <p className="text-sm text-muted-foreground mb-4">
-            {task.description}
-          </p>
-
           <div className="space-y-4">
-            <div>
-              <div className="flex justify-between text-sm mb-1">
-                <span>Progreso</span>
-                <span>{progress}%</span>
+            <p className="text-sm text-muted-foreground line-clamp-2">
+              {task.description}
+            </p>
+
+            <div className="space-y-1">
+              <div className="flex justify-between items-center text-sm">
+                <span>Progreso: {progress}%</span>
               </div>
-              <div className="space-y-2">
-                <Progress value={progress} className="transition-all duration-500" />
-                <Slider
-                  defaultValue={[progress]}
-                  max={100}
-                  step={25}
-                  className="cursor-pointer"
-                  onValueChange={handleProgressChange}
-                  disabled={isUpdating}
-                />
-              </div>
+              <Slider
+                defaultValue={[progress]}
+                max={100}
+                step={10}
+                onValueChange={handleProgressChange}
+                className={cn(
+                  "cursor-pointer transition-opacity duration-200",
+                  isUpdating ? "opacity-50 pointer-events-none" : ""
+                )}
+                disabled={isUpdating}
+              />
             </div>
 
             {task.status === TaskStatus.IN_PROGRESS && (
