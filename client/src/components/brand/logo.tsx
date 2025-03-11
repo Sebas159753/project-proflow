@@ -17,7 +17,7 @@ export const Logo: FC<LogoProps> = ({ className = "", size = 40 }) => {
     >
       {/* Círculo exterior - representa el tiempo */}
       <circle cx="20" cy="20" r="18" stroke="currentColor" strokeWidth="2" className="text-primary"/>
-      
+
       {/* Marca de tiempo - representa progreso */}
       <path
         d="M20 8 L20 20 L28 24"
@@ -26,10 +26,10 @@ export const Logo: FC<LogoProps> = ({ className = "", size = 40 }) => {
         strokeLinecap="round"
         className="text-primary"
       />
-      
+
       {/* Punto central */}
       <circle cx="20" cy="20" r="2" fill="currentColor" className="text-primary"/>
-      
+
       {/* Marcas de horas */}
       {[0, 1, 2, 3, 4, 5].map((i) => (
         <line
@@ -52,7 +52,7 @@ export const LogoWithText: FC<LogoProps> = ({ className = "", size = 40 }) => {
   return (
     <div className={`flex items-center gap-2 ${className}`}>
       <Logo size={size} />
-      <span className="font-bold text-xl">FocusFlow</span>
+      <span className="font-bold text-xl">DataFocus</span>
     </div>
   );
 };
