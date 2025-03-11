@@ -48,9 +48,12 @@ export function EditTaskDialog({ task, users, open, onOpenChange }: EditTaskDial
 
   const handleSave = async () => {
     try {
-      await apiRequest("PATCH", `/api/tasks/${task.id}`, {
-        ...editedTask,
-        dueDate: editedTask.dueDate.toISOString()
+      await apiRequest(`/api/tasks/${task.id}`, {
+        method: 'PATCH',
+        body: {
+          ...editedTask,
+          dueDate: editedTask.dueDate.toISOString()
+        }
       });
 
       // Invalidar y refrescar la caché
@@ -75,7 +78,7 @@ export function EditTaskDialog({ task, users, open, onOpenChange }: EditTaskDial
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[500px]">
+      <DialogContent className="sm:max-w-[700px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Editar Tarea</DialogTitle>
           <DialogDescription>
@@ -97,41 +100,43 @@ export function EditTaskDialog({ task, users, open, onOpenChange }: EditTaskDial
               onChange={(e) => setEditedTask(prev => ({ ...prev, description: e.target.value }))}
             />
           </div>
-          <div className="space-y-2">
-            <label>Estado</label>
-            <Select
-              value={editedTask.status}
-              onValueChange={(value) => setEditedTask(prev => ({ ...prev, status: value as typeof prev.status }))}
-            >
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {Object.values(TaskStatus).map((status) => (
-                  <SelectItem key={status} value={status}>
-                    {status}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="space-y-2">
-            <label>Prioridad</label>
-            <Select
-              value={editedTask.priority}
-              onValueChange={(value) => setEditedTask(prev => ({ ...prev, priority: value as typeof prev.priority }))}
-            >
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {Object.values(TaskPriority).map((priority) => (
-                  <SelectItem key={priority} value={priority}>
-                    {priority}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <label>Estado</label>
+              <Select
+                value={editedTask.status}
+                onValueChange={(value) => setEditedTask(prev => ({ ...prev, status: value as typeof prev.status }))}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {Object.values(TaskStatus).map((status) => (
+                    <SelectItem key={status} value={status}>
+                      {status}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <label>Prioridad</label>
+              <Select
+                value={editedTask.priority}
+                onValueChange={(value) => setEditedTask(prev => ({ ...prev, priority: value as typeof prev.priority }))}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {Object.values(TaskPriority).map((priority) => (
+                    <SelectItem key={priority} value={priority}>
+                      {priority}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           </div>
           <div className="space-y-2">
             <label>Configuración Pomodoro</label>
@@ -205,7 +210,7 @@ export function EditTaskDialog({ task, users, open, onOpenChange }: EditTaskDial
               </SelectContent>
             </Select>
           </div>
-          <div className="flex justify-end gap-3">
+          <div className="flex justify-end gap-3 pt-4">
             <Button variant="outline" onClick={() => onOpenChange(false)}>
               Cancelar
             </Button>
