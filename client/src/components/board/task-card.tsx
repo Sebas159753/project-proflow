@@ -13,6 +13,7 @@ import { Badge } from "@/components/ui/badge";
 import { motion, AnimatePresence } from "framer-motion";
 import { Slider } from "@/components/ui/slider";
 import { EditTaskDialog } from "../dialogs/edit-task-dialog";
+import { usePoints } from "@/hooks/use-points";
 
 interface TaskCardProps {
   task: Task;
@@ -44,6 +45,7 @@ export function TaskCard({ task, users }: TaskCardProps) {
   const [showCelebration, setShowCelebration] = useState(false);
   const queryClient = useQueryClient();
   const { toast } = useToast();
+  const { awardPoints } = usePoints();
 
   useEffect(() => {
     if (progress === 100 && !showCelebration) {
@@ -62,9 +64,21 @@ export function TaskCard({ task, users }: TaskCardProps) {
     setIsUpdating(true);
 
     try {
-      await apiRequest("PATCH", `/api/tasks/${task.id}`, {
-        progress: progressValue
+      await apiRequest(`/api/tasks/${task.id}`, {
+        method: 'PATCH',
+        body: {
+          progress: progressValue,
+          status: progressValue === 100 ? TaskStatus.COMPLETED : task.status
+        }
       });
+
+      // Si la tarea se completó, otorgar puntos al usuario asignado
+      if (progressValue === 100 && task.status !== TaskStatus.COMPLETED) {
+        const userId = task.assignedUserIds[0]; // Por ahora usamos el primer usuario asignado
+        if (userId) {
+          await awardPoints(task, userId);
+        }
+      }
 
       await queryClient.invalidateQueries({ queryKey: ["/api/tasks"] });
 
@@ -87,7 +101,9 @@ export function TaskCard({ task, users }: TaskCardProps) {
 
   const handleDelete = async () => {
     try {
-      await apiRequest("DELETE", `/api/tasks/${task.id}`);
+      await apiRequest(`/api/tasks/${task.id}`, {
+        method: 'DELETE'
+      });
       queryClient.invalidateQueries({ queryKey: ["/api/tasks"] });
 
       toast({

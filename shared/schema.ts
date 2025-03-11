@@ -17,7 +17,12 @@ export const TaskPriority = {
 
 // Puntos por acción
 export const GamePoints = {
-  TASK_COMPLETION: 100,
+  TASK_COMPLETION: {
+    [TaskPriority.URGENT]: 5,
+    [TaskPriority.HIGH]: 4,
+    [TaskPriority.MEDIUM]: 3,
+    [TaskPriority.LOW]: 1
+  },
   POMODORO_COMPLETION: 20,
   EARLY_COMPLETION: 50,  // Completar antes de la fecha límite
   STREAK_BONUS: 30,      // Bonus por completar tareas varios días seguidos
