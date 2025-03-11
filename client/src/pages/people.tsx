@@ -20,9 +20,10 @@ import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import type { User } from "@shared/schema";
 import { BadgeDisplay } from "@/components/badges/badge-display";
+import { PersonCardsGridSkeleton } from "@/components/skeletons/person-card-skeleton";
 
 export default function People() {
   const [showAddPerson, setShowAddPerson] = useState(false);
@@ -93,10 +94,6 @@ export default function People() {
     }
   }
 
-  if (isLoading) {
-    return <div>Cargando...</div>;
-  }
-
   return (
     <div className="flex h-screen bg-background">
       <Sidebar />
@@ -109,36 +106,55 @@ export default function People() {
           </Button>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {users.map((user) => (
+        <AnimatePresence mode="wait">
+          {isLoading ? (
             <motion.div
-              key={user.id}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
               transition={{ duration: 0.2 }}
             >
-              <Card>
-                <CardContent className="p-6">
-                  <div className="flex items-center justify-between mb-4">
-                    <h3 className="font-semibold">{user.name}</h3>
-                    <Button 
-                      variant="outline" 
-                      size="sm"
-                      onClick={() => {
-                        setEditingPerson({ id: user.id, name: user.name });
-                        setShowEditPerson(true);
-                      }}
-                    >
-                      <Edit2 className="h-4 w-4 mr-2" />
-                      Editar
-                    </Button>
-                  </div>
-                  <BadgeDisplay userId={user.id} />
-                </CardContent>
-              </Card>
+              <PersonCardsGridSkeleton />
             </motion.div>
-          ))}
-        </div>
+          ) : (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+            >
+              {users.map((user) => (
+                <motion.div
+                  key={user.id}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.2 }}
+                >
+                  <Card>
+                    <CardContent className="p-6">
+                      <div className="flex items-center justify-between mb-4">
+                        <h3 className="font-semibold">{user.name}</h3>
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={() => {
+                            setEditingPerson({ id: user.id, name: user.name });
+                            setShowEditPerson(true);
+                          }}
+                        >
+                          <Edit2 className="h-4 w-4 mr-2" />
+                          Editar
+                        </Button>
+                      </div>
+                      <BadgeDisplay userId={user.id} />
+                    </CardContent>
+                  </Card>
+                </motion.div>
+              ))}
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {/* Diálogo para agregar persona */}
         <Dialog open={showAddPerson} onOpenChange={setShowAddPerson}>
