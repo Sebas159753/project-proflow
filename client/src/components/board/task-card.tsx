@@ -134,15 +134,8 @@ export function TaskCard({ task, users }: TaskCardProps) {
             )}
 
             <div className="flex items-center justify-between">
-              <div className="flex -space-x-2">
-                {assignedUsers.map(user => (
-                  <Avatar key={user.id} className="h-8 w-8 border-2 border-background">
-                    <AvatarImage src={user.avatar} />
-                    <AvatarFallback>
-                      {user.name.split(' ').map(n => n[0]).join('')}
-                    </AvatarFallback>
-                  </Avatar>
-                ))}
+              <div className="text-sm text-muted-foreground">
+                Asignado a: {assignedUsers.map(user => user.name).join(', ')}
               </div>
               <div className="text-sm text-muted-foreground">
                 {format(new Date(task.dueDate), 'MMM d')}
