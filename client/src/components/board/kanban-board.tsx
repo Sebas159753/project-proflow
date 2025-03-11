@@ -96,9 +96,9 @@ export function KanbanBoard({ tasks, users }: KanbanBoardProps) {
               transition={{ duration: 0.3, delay: index * 0.1 }}
               className={`rounded-lg p-4 transition-all duration-300 hover:shadow-lg ${column.className}`}
             >
-              <h3 className={`font-semibold mb-4 flex items-center ${column.id === TaskStatus.TODO ? 'text-gray-800' : 'text-white'}`}>
+              <h3 className="font-semibold mb-4 flex items-center text-white">
                 {column.title}
-                <span className={`ml-2 text-sm ${column.id === TaskStatus.TODO ? 'text-gray-600' : 'text-white/70'}`}>
+                <span className="ml-2 text-sm text-white/70">
                   ({getTasksByStatus(column.id).length})
                 </span>
               </h3>
