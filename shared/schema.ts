@@ -8,7 +8,15 @@ export const TaskStatus = {
   REVIEW: "Under Review"
 } as const;
 
+export const TaskPriority = {
+  LOW: "Baja",
+  MEDIUM: "Media",
+  HIGH: "Alta",
+  URGENT: "Urgente"
+} as const;
+
 export type TaskStatusType = typeof TaskStatus[keyof typeof TaskStatus];
+export type TaskPriorityType = typeof TaskPriority[keyof typeof TaskPriority];
 
 export const users = pgTable("users", {
   id: serial("id").primaryKey(),
@@ -21,9 +29,21 @@ export const tasks = pgTable("tasks", {
   title: text("title").notNull(),
   description: text("description").notNull(),
   status: text("status").notNull().$type<TaskStatusType>(),
+  priority: text("priority").notNull().$type<TaskPriorityType>().default(TaskPriority.MEDIUM),
   progress: integer("progress").notNull().default(0),
   dueDate: timestamp("due_date").notNull(),
   assignedUserIds: integer("assigned_user_ids").array().notNull().default([]),
+});
+
+// Schema para insertar tareas
+export const insertTaskSchema = z.object({
+  title: z.string().min(1, "El título es requerido"),
+  description: z.string().min(1, "La descripción es requerida"),
+  status: z.enum([TaskStatus.TODO, TaskStatus.IN_PROGRESS, TaskStatus.COMPLETED, TaskStatus.REVIEW]),
+  priority: z.enum([TaskPriority.LOW, TaskPriority.MEDIUM, TaskPriority.HIGH, TaskPriority.URGENT]).default(TaskPriority.MEDIUM),
+  progress: z.number().min(0).max(100).default(0),
+  dueDate: z.string(),
+  assignedUserIds: z.number().array().default([])
 });
 
 export const pomodoroSessions = pgTable("pomodoro_sessions", {
@@ -36,15 +56,11 @@ export const pomodoroSessions = pgTable("pomodoro_sessions", {
   completed: integer("completed").notNull().default(0),
 });
 
-// Schema para insertar tareas
-export const insertTaskSchema = z.object({
-  title: z.string().min(1, "El título es requerido"),
-  description: z.string().min(1, "La descripción es requerida"),
-  status: z.enum([TaskStatus.TODO, TaskStatus.IN_PROGRESS, TaskStatus.COMPLETED, TaskStatus.REVIEW]),
-  progress: z.number().min(0).max(100).default(0),
-  dueDate: z.string(),
-  assignedUserIds: z.number().array().default([])
-});
+export type InsertTask = z.infer<typeof insertTaskSchema>;
+export type Task = typeof tasks.$inferSelect;
+export type User = typeof users.$inferSelect;
+export type PomodoroSession = typeof pomodoroSessions.$inferSelect;
+export type InsertPomodoroSession = z.infer<typeof insertPomodoroSessionSchema>;
 
 // Schema para insertar sesiones de pomodoro
 export const insertPomodoroSessionSchema = z.object({
@@ -55,9 +71,3 @@ export const insertPomodoroSessionSchema = z.object({
   type: z.enum(["work", "break", "long_break"]),
   completed: z.number().default(0)
 });
-
-export type InsertTask = z.infer<typeof insertTaskSchema>;
-export type Task = typeof tasks.$inferSelect;
-export type User = typeof users.$inferSelect;
-export type PomodoroSession = typeof pomodoroSessions.$inferSelect;
-export type InsertPomodoroSession = z.infer<typeof insertPomodoroSessionSchema>;

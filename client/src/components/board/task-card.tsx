@@ -2,7 +2,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { format } from "date-fns";
-import { TaskStatus, type Task, type User } from "@shared/schema";
+import { TaskStatus, type Task, type User, TaskPriority } from "@shared/schema";
 import { PomodoroTimer } from "../pomodoro/pomodoro-timer";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -10,11 +10,27 @@ import { Timer, Trash2 } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { Badge } from "@/components/ui/badge";
 
 interface TaskCardProps {
   task: Task;
   users: User[];
 }
+
+const getPriorityColor = (priority: string) => {
+  switch (priority) {
+    case TaskPriority.URGENT:
+      return "bg-red-100 text-red-800 hover:bg-red-100/80";
+    case TaskPriority.HIGH:
+      return "bg-orange-100 text-orange-800 hover:bg-orange-100/80";
+    case TaskPriority.MEDIUM:
+      return "bg-yellow-100 text-yellow-800 hover:bg-yellow-100/80";
+    case TaskPriority.LOW:
+      return "bg-green-100 text-green-800 hover:bg-green-100/80";
+    default:
+      return "";
+  }
+};
 
 export function TaskCard({ task, users }: TaskCardProps) {
   const [showPomodoro, setShowPomodoro] = useState(false);
@@ -56,7 +72,12 @@ export function TaskCard({ task, users }: TaskCardProps) {
     <Card>
       <CardContent className="p-4">
         <div className="flex justify-between items-start mb-2">
-          <h3 className="font-semibold">{task.title}</h3>
+          <div className="flex items-center gap-2">
+            <h3 className="font-semibold">{task.title}</h3>
+            <Badge variant="secondary" className={getPriorityColor(task.priority)}>
+              {task.priority}
+            </Badge>
+          </div>
           <Button 
             variant="ghost" 
             size="sm"

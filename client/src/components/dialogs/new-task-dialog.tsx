@@ -8,7 +8,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
-import { TaskStatus, insertTaskSchema, type User } from "@shared/schema";
+import { TaskStatus, TaskPriority, insertTaskSchema, type User } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
 import { MultiSelect } from "@/components/ui/multi-select";
 
@@ -30,7 +30,8 @@ export function NewTaskDialog({ open, onOpenChange, users }: NewTaskDialogProps)
       status: TaskStatus.TODO,
       progress: 0,
       dueDate: new Date().toISOString().split('T')[0],
-      assignedUserIds: []
+      assignedUserIds: [],
+      priority: TaskPriority.NORMAL // Added default value for priority
     }
   });
 
@@ -91,9 +92,9 @@ export function NewTaskDialog({ open, onOpenChange, users }: NewTaskDialogProps)
                 <FormItem>
                   <FormLabel>Descripción</FormLabel>
                   <FormControl>
-                    <Textarea 
+                    <Textarea
                       placeholder="Describe la tarea"
-                      {...field} 
+                      {...field}
                     />
                   </FormControl>
                   <FormMessage />
@@ -128,12 +129,37 @@ export function NewTaskDialog({ open, onOpenChange, users }: NewTaskDialogProps)
 
             <FormField
               control={form.control}
+              name="priority"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Prioridad</FormLabel>
+                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecciona la prioridad" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {Object.values(TaskPriority).map((priority) => (
+                        <SelectItem key={priority} value={priority}>
+                          {priority}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
               name="dueDate"
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Fecha de vencimiento</FormLabel>
                   <FormControl>
-                    <Input 
+                    <Input
                       type="date"
                       {...field}
                     />
@@ -166,9 +192,9 @@ export function NewTaskDialog({ open, onOpenChange, users }: NewTaskDialogProps)
             />
 
             <div className="flex justify-end gap-3 pt-4">
-              <Button 
-                type="button" 
-                variant="outline" 
+              <Button
+                type="button"
+                variant="outline"
                 onClick={() => onOpenChange(false)}
               >
                 Cancelar
