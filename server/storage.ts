@@ -1,4 +1,4 @@
-import { Task, InsertTask, User, tasks, users, TaskStatus } from "@shared/schema";
+import { Task, InsertTask, User, PomodoroSession, InsertPomodoroSession, tasks, users, pomodoroSessions, TaskStatus } from "@shared/schema";
 import { db } from "./db";
 import { eq } from "drizzle-orm";
 
@@ -7,6 +7,8 @@ export interface IStorage {
   createTask(task: InsertTask): Promise<Task>;
   updateTask(id: number, task: Partial<Task>): Promise<Task>;
   getUsers(): Promise<User[]>;
+  getPomodoroSessions(): Promise<PomodoroSession[]>;
+  createPomodoroSession(session: InsertPomodoroSession): Promise<PomodoroSession>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -35,6 +37,15 @@ export class DatabaseStorage implements IStorage {
 
   async getUsers(): Promise<User[]> {
     return await db.select().from(users);
+  }
+
+  async getPomodoroSessions(): Promise<PomodoroSession[]> {
+    return await db.select().from(pomodoroSessions);
+  }
+
+  async createPomodoroSession(session: InsertPomodoroSession): Promise<PomodoroSession> {
+    const [newSession] = await db.insert(pomodoroSessions).values(session).returning();
+    return newSession;
   }
 
   // Inicializar datos de ejemplo

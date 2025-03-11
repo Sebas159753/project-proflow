@@ -20,8 +20,11 @@ export function TaskCard({ task, users }: TaskCardProps) {
   );
 
   const handlePomodoroComplete = () => {
-    // Aquí podrías actualizar el progreso de la tarea si lo deseas
+    // Actualizar el progreso de la tarea aquí si lo deseas
   };
+
+  // Por ahora usaremos el primer usuario asignado como el usuario activo
+  const activeUserId = task.assignedUserIds[0];
 
   return (
     <Card>
@@ -53,7 +56,11 @@ export function TaskCard({ task, users }: TaskCardProps) {
                   Iniciar Pomodoro
                 </Button>
               ) : (
-                <PomodoroTimer onComplete={handlePomodoroComplete} />
+                <PomodoroTimer 
+                  taskId={task.id} 
+                  userId={activeUserId}
+                  onComplete={handlePomodoroComplete} 
+                />
               )}
             </div>
           )}

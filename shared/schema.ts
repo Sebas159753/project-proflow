@@ -26,7 +26,17 @@ export const tasks = pgTable("tasks", {
   assignedUserIds: integer("assigned_user_ids").array().notNull().default([]),
 });
 
-// Simplificar el schema de inserción
+export const pomodoroSessions = pgTable("pomodoro_sessions", {
+  id: serial("id").primaryKey(),
+  taskId: integer("task_id").notNull(),
+  userId: integer("user_id").notNull(),
+  startTime: timestamp("start_time").notNull(),
+  endTime: timestamp("end_time").notNull(),
+  type: text("type").notNull().$type<"work" | "break" | "long_break">(),
+  completed: integer("completed").notNull().default(0),
+});
+
+// Schema para insertar tareas
 export const insertTaskSchema = z.object({
   title: z.string().min(1, "El título es requerido"),
   description: z.string().min(1, "La descripción es requerida"),
@@ -36,6 +46,18 @@ export const insertTaskSchema = z.object({
   assignedUserIds: z.number().array().default([])
 });
 
+// Schema para insertar sesiones de pomodoro
+export const insertPomodoroSessionSchema = z.object({
+  taskId: z.number(),
+  userId: z.number(),
+  startTime: z.date(),
+  endTime: z.date(),
+  type: z.enum(["work", "break", "long_break"]),
+  completed: z.number().default(0)
+});
+
 export type InsertTask = z.infer<typeof insertTaskSchema>;
 export type Task = typeof tasks.$inferSelect;
 export type User = typeof users.$inferSelect;
+export type PomodoroSession = typeof pomodoroSessions.$inferSelect;
+export type InsertPomodoroSession = z.infer<typeof insertPomodoroSessionSchema>;

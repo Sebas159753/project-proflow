@@ -3,17 +3,22 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { Timer, Pause, Play, Coffee } from "lucide-react";
+import { useQueryClient } from "@tanstack/react-query";
+import { apiRequest } from "@/lib/queryClient";
 
 interface PomodoroTimerProps {
+  taskId: number;
+  userId: number;
   onComplete?: () => void;
 }
 
-export function PomodoroTimer({ onComplete }: PomodoroTimerProps) {
+export function PomodoroTimer({ taskId, userId, onComplete }: PomodoroTimerProps) {
   const [timeLeft, setTimeLeft] = useState(30 * 60); // 30 minutes in seconds
   const [isRunning, setIsRunning] = useState(false);
   const [isBreak, setIsBreak] = useState(false);
   const [pomodoroCount, setPomodoroCount] = useState(0);
   const { toast } = useToast();
+  const queryClient = useQueryClient();
 
   useEffect(() => {
     let interval: NodeJS.Timeout;
@@ -23,11 +28,30 @@ export function PomodoroTimer({ onComplete }: PomodoroTimerProps) {
         setTimeLeft((time) => time - 1);
       }, 1000);
     } else if (timeLeft === 0) {
-      if (!isBreak) {
-        // Pomodoro completado
+      handlePomodoroComplete();
+    }
+
+    return () => clearInterval(interval);
+  }, [isRunning, timeLeft]);
+
+  const handlePomodoroComplete = async () => {
+    if (!isBreak) {
+      // Pomodoro de trabajo completado
+      try {
+        await apiRequest("POST", "/api/pomodoro-sessions", {
+          taskId,
+          userId,
+          startTime: new Date(Date.now() - 30 * 60 * 1000),
+          endTime: new Date(),
+          type: "work",
+          completed: 1
+        });
+
+        queryClient.invalidateQueries({ queryKey: ["/api/pomodoro-sessions"] });
+
         setPomodoroCount((count) => count + 1);
         const isLongBreak = (pomodoroCount + 1) % 4 === 0;
-        
+
         toast({
           title: "¡Pomodoro completado!",
           description: isLongBreak 
@@ -38,8 +62,28 @@ export function PomodoroTimer({ onComplete }: PomodoroTimerProps) {
 
         setTimeLeft(isLongBreak ? 15 * 60 : 5 * 60);
         setIsBreak(true);
-      } else {
-        // Descanso completado
+      } catch (error) {
+        console.error("Error al guardar la sesión de pomodoro:", error);
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "No se pudo guardar la sesión de pomodoro"
+        });
+      }
+    } else {
+      // Descanso completado
+      try {
+        await apiRequest("POST", "/api/pomodoro-sessions", {
+          taskId,
+          userId,
+          startTime: new Date(Date.now() - (timeLeft === 15 * 60 ? 15 : 5) * 60 * 1000),
+          endTime: new Date(),
+          type: (timeLeft === 15 * 60 ? "long_break" : "break"),
+          completed: 1
+        });
+
+        queryClient.invalidateQueries({ queryKey: ["/api/pomodoro-sessions"] });
+
         toast({
           title: "¡Descanso terminado!",
           description: "¿Listo para otro pomodoro?",
@@ -48,13 +92,19 @@ export function PomodoroTimer({ onComplete }: PomodoroTimerProps) {
 
         setTimeLeft(30 * 60);
         setIsBreak(false);
+      } catch (error) {
+        console.error("Error al guardar la sesión de descanso:", error);
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "No se pudo guardar la sesión de descanso"
+        });
       }
-      setIsRunning(false);
-      if (onComplete) onComplete();
     }
 
-    return () => clearInterval(interval);
-  }, [isRunning, timeLeft, isBreak, pomodoroCount, onComplete, toast]);
+    setIsRunning(false);
+    if (onComplete) onComplete();
+  };
 
   const toggleTimer = () => {
     setIsRunning(!isRunning);
