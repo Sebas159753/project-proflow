@@ -102,9 +102,11 @@ export function TaskCard({ task, users }: TaskCardProps) {
   const handleDelete = async () => {
     try {
       await apiRequest(`/api/tasks/${task.id}`, {
-        method: 'DELETE'
+        method: 'DELETE',
+        body: {} // Añadimos un cuerpo vacío para asegurar que la llamada se procese correctamente
       });
-      queryClient.invalidateQueries({ queryKey: ["/api/tasks"] });
+
+      await queryClient.invalidateQueries({ queryKey: ["/api/tasks"] });
 
       toast({
         title: "¡Éxito!",
@@ -112,6 +114,7 @@ export function TaskCard({ task, users }: TaskCardProps) {
         className: "bg-green-500 text-white"
       });
     } catch (error) {
+      console.error('Error al eliminar la tarea:', error);
       toast({
         variant: "destructive",
         title: "Error",
