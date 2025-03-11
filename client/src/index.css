@@ -6,38 +6,38 @@
   :root {
     --background: 0 0% 100%;
     --foreground: 200 16% 18%;
-    
-    --primary: 216 89% 34%;
+
+    --primary: 209 83% 26%; /* Updated to #094780 */
     --primary-foreground: 0 0% 100%;
-    
+
     --secondary: 210 79% 54%;
     --secondary-foreground: 0 0% 100%;
-    
+
     --muted: 210 15% 94%;
     --muted-foreground: 200 16% 18%;
-    
+
     --accent: 210 15% 94%;
     --accent-foreground: 216 89% 34%;
-    
+
     --card: 0 0% 100%;
     --card-foreground: 200 16% 18%;
-    
+
     --popover: 0 0% 100%;
     --popover-foreground: 200 16% 18%;
-    
+
     --border: 210 15% 94%;
     --input: 210 15% 94%;
     --ring: 216 89% 34%;
-    
-    --sidebar-background: 216 89% 34%;
+
+    --sidebar-background: 209 83% 26%; /* Updated to #094780 */
     --sidebar-foreground: 0 0% 100%;
-    --sidebar-primary: 0 0% 100%;
-    --sidebar-primary-foreground: 216 89% 34%;
-    --sidebar-accent: 210 79% 54%;
+    --sidebar-primary: 209 83% 26%; /* Updated to #094780 */
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 209 83% 26%; /* Updated to #094780 */
     --sidebar-accent-foreground: 0 0% 100%;
-    --sidebar-border: 0 0% 100%;
-    --sidebar-ring: 0 0% 100%;
-    
+    --sidebar-border: 209 83% 26%; /* Updated to #094780 */
+    --sidebar-ring: 209 83% 26%; /* Updated to #094780 */
+
     --chart-1: 216 89% 34%;
     --chart-2: 210 79% 54%;
     --chart-3: 210 15% 94%;
