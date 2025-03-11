@@ -10,28 +10,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   app.post("/api/tasks", async (req, res) => {
-    console.log("Creating task with data:", req.body);
-    const result = insertTaskSchema.safeParse(req.body);
-    if (!result.success) {
-      console.error("Task validation failed:", result.error);
-      return res.status(400).json({ error: result.error });
-    }
     try {
+      const result = insertTaskSchema.safeParse(req.body);
+
+      if (!result.success) {
+        return res.status(400).json({ 
+          error: "Datos inválidos",
+          details: result.error.errors 
+        });
+      }
+
       const task = await storage.createTask({
         ...result.data,
         dueDate: new Date(result.data.dueDate)
       });
+
       res.json(task);
     } catch (error) {
-      console.error("Error creating task in storage:", error);
-      res.status(500).json({ error: "Failed to create task" });
+      console.error("Error al crear la tarea:", error);
+      res.status(500).json({ 
+        error: "Error interno del servidor",
+        message: "No se pudo crear la tarea" 
+      });
     }
   });
 
   app.patch("/api/tasks/:id", async (req, res) => {
     const id = parseInt(req.params.id);
     if (isNaN(id)) {
-      return res.status(400).json({ error: "Invalid task ID" });
+      return res.status(400).json({ error: "ID de tarea inválido" });
     }
     try {
       const task = await storage.updateTask(id, req.body);

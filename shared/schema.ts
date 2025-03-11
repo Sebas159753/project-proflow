@@ -1,5 +1,4 @@
 import { pgTable, text, serial, integer, timestamp } from "drizzle-orm/pg-core";
-import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
 export const TaskStatus = {
@@ -27,15 +26,15 @@ export const tasks = pgTable("tasks", {
   assignedUserIds: integer("assigned_user_ids").array().notNull().default([]),
 });
 
-// Mejorar el schema de inserción con validaciones más específicas
-export const insertTaskSchema = createInsertSchema(tasks, {
-  title: z.string().min(1, "Title is required"),
-  description: z.string().min(1, "Description is required"),
+// Simplificar el schema de inserción
+export const insertTaskSchema = z.object({
+  title: z.string().min(1, "El título es requerido"),
+  description: z.string().min(1, "La descripción es requerida"),
   status: z.enum([TaskStatus.TODO, TaskStatus.IN_PROGRESS, TaskStatus.COMPLETED, TaskStatus.REVIEW]),
   progress: z.number().min(0).max(100).default(0),
-  dueDate: z.date(),
+  dueDate: z.string(),
   assignedUserIds: z.number().array().default([])
-}).omit({ id: true });
+});
 
 export type InsertTask = z.infer<typeof insertTaskSchema>;
 export type Task = typeof tasks.$inferSelect;
