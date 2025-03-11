@@ -37,7 +37,7 @@ export function TaskCard({ task, users }: TaskCardProps) {
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
-  const assignedUsers = users.filter(user => 
+  const assignedUsers = users.filter(user =>
     task.assignedUserIds.includes(user.id)
   );
 
@@ -81,15 +81,15 @@ export function TaskCard({ task, users }: TaskCardProps) {
           <div className="flex justify-between items-start mb-2">
             <div className="flex items-center gap-2">
               <h3 className="font-semibold">{task.title}</h3>
-              <Badge 
-                variant="secondary" 
+              <Badge
+                variant="secondary"
                 className={`${getPriorityColor(task.priority)} transition-colors duration-200`}
               >
                 {task.priority}
               </Badge>
             </div>
-            <Button 
-              variant="ghost" 
+            <Button
+              variant="ghost"
               size="sm"
               className="text-red-500 hover:text-red-700 hover:bg-red-100 transition-colors duration-200"
               onClick={handleDelete}
@@ -124,10 +124,10 @@ export function TaskCard({ task, users }: TaskCardProps) {
                     Iniciar Pomodoro
                   </Button>
                 ) : (
-                  <PomodoroTimer 
-                    taskId={task.id} 
+                  <PomodoroTimer
+                    taskId={task.id}
                     userId={activeUserId}
-                    onComplete={handlePomodoroComplete} 
+                    onComplete={handlePomodoroComplete}
                   />
                 )}
               </div>
