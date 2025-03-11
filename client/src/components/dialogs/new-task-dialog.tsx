@@ -65,13 +65,13 @@ export function NewTaskDialog({ open, onOpenChange, users }: NewTaskDialogProps)
       console.log("Submitting task data:", data);
       const response = await apiRequest("POST", "/api/tasks", {
         ...data,
-        dueDate: data.dueDate.toISOString()
+        // Ya no necesitamos convertir la fecha aquí porque el schema lo hace
+        dueDate: data.dueDate
       });
       console.log("Task creation response:", response);
 
       queryClient.invalidateQueries({ queryKey: ["/api/tasks"] });
 
-      // Mostrar toast con animación
       toast({
         title: "¡Tarea creada!",
         description: "La tarea se ha creado exitosamente",
@@ -81,7 +81,6 @@ export function NewTaskDialog({ open, onOpenChange, users }: NewTaskDialogProps)
       onOpenChange(false);
       form.reset();
 
-      // Crear efecto de confeti
       const confetti = (await import('canvas-confetti')).default;
       confetti({
         particleCount: 100,
