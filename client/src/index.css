@@ -11,3 +11,46 @@
     @apply font-sans antialiased bg-background text-foreground;
   }
 }
+
+/* High Contrast Mode Styles */
+.high-contrast {
+  --background: hsl(0 0% 100%);
+  --foreground: hsl(0 0% 0%);
+  --border: hsl(0 0% 0%);
+
+  &.dark {
+    --background: hsl(0 0% 0%);
+    --foreground: hsl(0 0% 100%);
+    --border: hsl(0 0% 100%);
+  }
+
+  /* Override component styles for high contrast */
+  .bg-muted {
+    background-color: var(--background) !important;
+  }
+
+  .text-muted-foreground {
+    color: var(--foreground) !important;
+    opacity: 0.8;
+  }
+
+  .border {
+    border-color: var(--border) !important;
+  }
+
+  /* Increase contrast for buttons */
+  .btn, button {
+    border-width: 2px !important;
+  }
+
+  /* Ensure text remains readable */
+  * {
+    text-shadow: none !important;
+  }
+
+  /* Increase focus indicators */
+  *:focus {
+    outline: 3px solid var(--foreground) !important;
+    outline-offset: 2px !important;
+  }
+}
