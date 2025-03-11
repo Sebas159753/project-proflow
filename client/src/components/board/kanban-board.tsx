@@ -4,6 +4,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { TaskStatus, type Task, type User } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
+import { motion } from "framer-motion";
 
 interface KanbanBoardProps {
   tasks: Task[];
@@ -58,8 +59,14 @@ export function KanbanBoard({ tasks, users }: KanbanBoardProps) {
   return (
     <DragDropContext onDragEnd={onDragEnd}>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {columns.map(column => (
-          <div key={column.id} className={`rounded-lg p-4 ${column.className}`}>
+        {columns.map((column, index) => (
+          <motion.div
+            key={column.id}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3, delay: index * 0.1 }}
+            className={`rounded-lg p-4 transition-all duration-300 hover:shadow-lg ${column.className}`}
+          >
             <h3 className={`font-semibold mb-4 flex items-center ${column.id === TaskStatus.COMPLETED ? 'text-white' : 'text-gray-800'}`}>
               {column.title}
               <span className={`ml-2 text-sm ${column.id === TaskStatus.COMPLETED ? 'text-white/70' : 'text-gray-600'}`}>
@@ -97,7 +104,7 @@ export function KanbanBoard({ tasks, users }: KanbanBoardProps) {
                 </div>
               )}
             </Droppable>
-          </div>
+          </motion.div>
         ))}
       </div>
     </DragDropContext>
