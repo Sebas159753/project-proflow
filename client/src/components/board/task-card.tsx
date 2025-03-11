@@ -14,6 +14,9 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Slider } from "@/components/ui/slider";
 import { EditTaskDialog } from "../dialogs/edit-task-dialog";
 import { usePoints } from "@/hooks/use-points";
+import { Dialog, DialogHeader, DialogTitle, DialogBody, DialogFooter, DialogClose } from "@/components/ui/dialog";
+import { cn } from "@/lib/utils";
+
 
 interface TaskCardProps {
   task: Task;
@@ -43,6 +46,7 @@ export function TaskCard({ task, users }: TaskCardProps) {
   const [isUpdating, setIsUpdating] = useState(false);
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [showCelebration, setShowCelebration] = useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const { awardPoints } = usePoints();
@@ -99,26 +103,27 @@ export function TaskCard({ task, users }: TaskCardProps) {
     }
   };
 
-  const handleDelete = async () => {
+  const handleDeleteTask = async () => {
     try {
       await apiRequest(`/api/tasks/${task.id}`, {
         method: 'DELETE',
-        body: {} // Añadimos un cuerpo vacío para asegurar que la llamada se procese correctamente
       });
 
-      await queryClient.invalidateQueries({ queryKey: ["/api/tasks"] });
+      // Actualizar el caché de las tareas después de eliminar
+      queryClient.invalidateQueries({ queryKey: ['tasks'] });
 
       toast({
-        title: "¡Éxito!",
-        description: "Tarea eliminada correctamente",
-        className: "bg-green-500 text-white"
+        title: "Tarea eliminada",
+        description: "La tarea ha sido eliminada correctamente",
+        variant: "default",
       });
+      setShowDeleteDialog(false);
     } catch (error) {
-      console.error('Error al eliminar la tarea:', error);
+      console.error("Error al eliminar la tarea:", error);
       toast({
-        variant: "destructive",
         title: "Error",
-        description: "No se pudo eliminar la tarea"
+        description: "No se pudo eliminar la tarea",
+        variant: "destructive",
       });
     }
   };
@@ -158,7 +163,7 @@ export function TaskCard({ task, users }: TaskCardProps) {
                 variant="ghost"
                 size="sm"
                 className="text-red-500 hover:text-red-700 hover:bg-red-100 transition-colors duration-200"
-                onClick={handleDelete}
+                onClick={() => setShowDeleteDialog(true)}
               >
                 <Trash2 className="h-4 w-4" />
               </Button>
@@ -265,6 +270,23 @@ export function TaskCard({ task, users }: TaskCardProps) {
         open={showEditDialog}
         onOpenChange={setShowEditDialog}
       />
+      <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <DialogHeader>
+          <DialogTitle>Eliminar Tarea</DialogTitle>
+          <DialogClose />
+        </DialogHeader>
+        <DialogBody>
+          ¿Estás seguro de que deseas eliminar la tarea "{task.title}"? Esta acción no se puede deshacer.
+        </DialogBody>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => setShowDeleteDialog(false)}>
+            Cancelar
+          </Button>
+          <Button variant="destructive" onClick={handleDeleteTask}>
+            Eliminar
+          </Button>
+        </DialogFooter>
+      </Dialog>
     </motion.div>
   );
 }
