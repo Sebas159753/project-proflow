@@ -11,6 +11,7 @@ import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
 import { motion } from "framer-motion";
+import { Slider } from "@/components/ui/slider";
 
 interface TaskCardProps {
   task: Task;
@@ -34,6 +35,8 @@ const getPriorityColor = (priority: string) => {
 
 export function TaskCard({ task, users }: TaskCardProps) {
   const [showPomodoro, setShowPomodoro] = useState(false);
+  const [progress, setProgress] = useState(task.progress);
+  const [isUpdating, setIsUpdating] = useState(false);
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
@@ -41,14 +44,38 @@ export function TaskCard({ task, users }: TaskCardProps) {
     task.assignedUserIds.includes(user.id)
   );
 
-  const handlePomodoroComplete = () => {
-    // Actualizar el progreso de la tarea aquí si lo deseas
+  const handleProgressChange = async (newValue: number[]) => {
+    const progressValue = newValue[0];
+    setProgress(progressValue);
+    setIsUpdating(true);
+
+    try {
+      await apiRequest("PATCH", `/api/tasks/${task.id}`, {
+        progress: progressValue
+      });
+
+      await queryClient.invalidateQueries({ queryKey: ["/api/tasks"] });
+
+      toast({
+        title: "¡Éxito!",
+        description: "Progreso actualizado correctamente",
+        className: "bg-green-500 text-white"
+      });
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "No se pudo actualizar el progreso"
+      });
+      setProgress(task.progress); // Revertir al valor original si hay error
+    } finally {
+      setIsUpdating(false);
+    }
   };
 
   const handleDelete = async () => {
     try {
       await apiRequest("DELETE", `/api/tasks/${task.id}`);
-
       queryClient.invalidateQueries({ queryKey: ["/api/tasks"] });
 
       toast({
@@ -65,7 +92,6 @@ export function TaskCard({ task, users }: TaskCardProps) {
     }
   };
 
-  // Por ahora usaremos el primer usuario asignado como el usuario activo
   const activeUserId = task.assignedUserIds[0];
 
   return (
@@ -106,9 +132,19 @@ export function TaskCard({ task, users }: TaskCardProps) {
             <div>
               <div className="flex justify-between text-sm mb-1">
                 <span>Progreso</span>
-                <span>{task.progress}%</span>
+                <span>{progress}%</span>
               </div>
-              <Progress value={task.progress} className="transition-all duration-500" />
+              <div className="space-y-2">
+                <Progress value={progress} className="transition-all duration-500" />
+                <Slider
+                  defaultValue={[progress]}
+                  max={100}
+                  step={5}
+                  className="cursor-pointer"
+                  onValueChange={handleProgressChange}
+                  disabled={isUpdating}
+                />
+              </div>
             </div>
 
             {task.status === TaskStatus.IN_PROGRESS && (
@@ -127,7 +163,7 @@ export function TaskCard({ task, users }: TaskCardProps) {
                   <PomodoroTimer
                     taskId={task.id}
                     userId={activeUserId}
-                    onComplete={handlePomodoroComplete}
+                    onComplete={handleProgressChange}
                   />
                 )}
               </div>
