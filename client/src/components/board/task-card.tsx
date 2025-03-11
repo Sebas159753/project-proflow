@@ -14,7 +14,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Slider } from "@/components/ui/slider";
 import { EditTaskDialog } from "../dialogs/edit-task-dialog";
 import { usePoints } from "@/hooks/use-points";
-import { Dialog, DialogHeader, DialogTitle, DialogBody, DialogFooter, DialogClose } from "@/components/ui/dialog";
+import { Dialog, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 
 
@@ -275,9 +275,9 @@ export function TaskCard({ task, users }: TaskCardProps) {
           <DialogTitle>Eliminar Tarea</DialogTitle>
           <DialogClose />
         </DialogHeader>
-        <DialogBody>
+        <DialogDescription>
           ¿Estás seguro de que deseas eliminar la tarea "{task.title}"? Esta acción no se puede deshacer.
-        </DialogBody>
+        </DialogDescription>
         <DialogFooter>
           <Button variant="outline" onClick={() => setShowDeleteDialog(false)}>
             Cancelar
