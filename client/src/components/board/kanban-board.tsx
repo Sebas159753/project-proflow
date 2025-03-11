@@ -12,10 +12,10 @@ interface KanbanBoardProps {
 
 // Definir el orden específico de las columnas
 const columns = [
-  { id: TaskStatus.TODO, title: "To-Do", className: "bg-yellow-50" }, // Changed color
-  { id: TaskStatus.IN_PROGRESS, title: "On Progress", className: "bg-blue-50" },
-  { id: TaskStatus.COMPLETED, title: "Completed", className: "bg-green-50" },
-  { id: TaskStatus.REVIEW, title: "Under Review", className: "bg-purple-50" }
+  { id: TaskStatus.TODO, title: "To-Do", className: "bg-[#EDF6FF]" },
+  { id: TaskStatus.IN_PROGRESS, title: "On Progress", className: "bg-[#CCE5FF]" },
+  { id: TaskStatus.REVIEW, title: "Under Review", className: "bg-[#66B2FF]" },
+  { id: TaskStatus.COMPLETED, title: "Completed", className: "bg-[#0066CC]" }
 ];
 
 export function KanbanBoard({ tasks, users }: KanbanBoardProps) {
@@ -60,9 +60,9 @@ export function KanbanBoard({ tasks, users }: KanbanBoardProps) {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {columns.map(column => (
           <div key={column.id} className={`rounded-lg p-4 ${column.className}`}>
-            <h3 className="font-semibold mb-4 flex items-center">
+            <h3 className={`font-semibold mb-4 flex items-center ${column.id === TaskStatus.COMPLETED ? 'text-white' : 'text-gray-800'}`}>
               {column.title}
-              <span className="ml-2 text-sm text-muted-foreground">
+              <span className={`ml-2 text-sm ${column.id === TaskStatus.COMPLETED ? 'text-white/70' : 'text-gray-600'}`}>
                 ({getTasksByStatus(column.id).length})
               </span>
             </h3>
