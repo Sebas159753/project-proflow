@@ -2,7 +2,11 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { format } from "date-fns";
-import type { Task, User } from "@shared/schema";
+import { TaskStatus, type Task, type User } from "@shared/schema";
+import { PomodoroTimer } from "../pomodoro/pomodoro-timer";
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Timer } from "lucide-react";
 
 interface TaskCardProps {
   task: Task;
@@ -10,9 +14,14 @@ interface TaskCardProps {
 }
 
 export function TaskCard({ task, users }: TaskCardProps) {
+  const [showPomodoro, setShowPomodoro] = useState(false);
   const assignedUsers = users.filter(user => 
     task.assignedUserIds.includes(user.id)
   );
+
+  const handlePomodoroComplete = () => {
+    // Aquí podrías actualizar el progreso de la tarea si lo deseas
+  };
 
   return (
     <Card>
@@ -21,15 +30,33 @@ export function TaskCard({ task, users }: TaskCardProps) {
         <p className="text-sm text-muted-foreground mb-4">
           {task.description}
         </p>
-        
+
         <div className="space-y-4">
           <div>
             <div className="flex justify-between text-sm mb-1">
-              <span>Progress</span>
+              <span>Progreso</span>
               <span>{task.progress}%</span>
             </div>
             <Progress value={task.progress} />
           </div>
+
+          {task.status === TaskStatus.IN_PROGRESS && (
+            <div className="space-y-2">
+              {!showPomodoro ? (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="w-full"
+                  onClick={() => setShowPomodoro(true)}
+                >
+                  <Timer className="h-4 w-4 mr-2" />
+                  Iniciar Pomodoro
+                </Button>
+              ) : (
+                <PomodoroTimer onComplete={handlePomodoroComplete} />
+              )}
+            </div>
+          )}
 
           <div className="flex items-center justify-between">
             <div className="flex -space-x-2">
@@ -42,7 +69,7 @@ export function TaskCard({ task, users }: TaskCardProps) {
                 </Avatar>
               ))}
             </div>
-            
+
             <div className="text-sm text-muted-foreground">
               {format(new Date(task.dueDate), 'MMM d')}
             </div>
