@@ -3,14 +3,14 @@ import { Progress } from "@/components/ui/progress";
 import { format } from "date-fns";
 import { TaskStatus, type Task, type User, TaskPriority } from "@shared/schema";
 import { PomodoroTimer } from "../pomodoro/pomodoro-timer";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Timer, Trash2, Edit } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { Slider } from "@/components/ui/slider";
 import { EditTaskDialog } from "../dialogs/edit-task-dialog";
 
@@ -34,13 +34,23 @@ const getPriorityColor = (priority: string) => {
   }
 };
 
+const EMOJIS = ["🎉", "🎊", "✨", "🌟", "💫", "🎯"];
+
 export function TaskCard({ task, users }: TaskCardProps) {
   const [showPomodoro, setShowPomodoro] = useState(false);
   const [progress, setProgress] = useState(task.progress);
   const [isUpdating, setIsUpdating] = useState(false);
   const [showEditDialog, setShowEditDialog] = useState(false);
+  const [showCelebration, setShowCelebration] = useState(false);
   const queryClient = useQueryClient();
   const { toast } = useToast();
+
+  useEffect(() => {
+    if (progress === 100 && !showCelebration) {
+      setShowCelebration(true);
+      setTimeout(() => setShowCelebration(false), 3000); // Hide after 3 seconds
+    }
+  }, [progress]);
 
   const assignedUsers = users.filter(user =>
     task.assignedUserIds.includes(user.id)
@@ -192,6 +202,43 @@ export function TaskCard({ task, users }: TaskCardProps) {
           </div>
         </CardContent>
       </Card>
+
+      <AnimatePresence>
+        {showCelebration && (
+          <div className="fixed inset-0 pointer-events-none flex items-center justify-center">
+            {EMOJIS.map((emoji, index) => (
+              <motion.div
+                key={index}
+                initial={{ 
+                  opacity: 0,
+                  scale: 0,
+                  y: 100,
+                  x: Math.random() * 200 - 100 
+                }}
+                animate={{ 
+                  opacity: 1,
+                  scale: [1, 1.5, 1],
+                  y: [-20, -40, -60],
+                  x: [Math.random() * 200 - 100, Math.random() * 300 - 150]
+                }}
+                exit={{ 
+                  opacity: 0,
+                  scale: 0,
+                  y: -100
+                }}
+                transition={{
+                  duration: 2,
+                  delay: index * 0.2,
+                  ease: "easeOut"
+                }}
+                className="absolute text-4xl"
+              >
+                {emoji}
+              </motion.div>
+            ))}
+          </div>
+        )}
+      </AnimatePresence>
 
       <EditTaskDialog
         task={task}
