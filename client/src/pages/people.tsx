@@ -33,7 +33,6 @@ export default function People() {
     try {
       await apiRequest("POST", "/api/users", {
         name: newPerson.name,
-        avatar: "" // Ya no usamos avatares
       });
 
       queryClient.invalidateQueries({ queryKey: ["/api/users"] });

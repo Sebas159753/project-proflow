@@ -21,7 +21,6 @@ export type TaskPriorityType = typeof TaskPriority[keyof typeof TaskPriority];
 export const users = pgTable("users", {
   id: serial("id").primaryKey(),
   name: text("name").notNull(),
-  avatar: text("avatar").notNull(),
 });
 
 export const tasks = pgTable("tasks", {
