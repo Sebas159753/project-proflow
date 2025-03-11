@@ -72,6 +72,22 @@ export function TaskCard({ task, users }: TaskCardProps) {
           progress: progressValue,
           status: progressValue === 100 ? TaskStatus.COMPLETED : task.status
       });
+      
+      if (progressValue === 100) {
+        awardPoints(10, 'Tarea completada');
+      }
+      
+      await queryClient.invalidateQueries(['tasks']);
+    } catch (error) {
+      console.error("Error al actualizar el progreso:", error);
+      toast({
+        title: "Error",
+        description: "No se pudo actualizar el progreso de la tarea",
+        variant: "destructive"
+      });
+    } finally {
+      setIsUpdating(false);
+    }
         }
       });
 
