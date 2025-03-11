@@ -17,7 +17,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       return res.status(400).json({ error: result.error });
     }
     try {
-      const task = await storage.createTask(result.data);
+      const task = await storage.createTask({
+        ...result.data,
+        dueDate: new Date(result.data.dueDate)
+      });
       res.json(task);
     } catch (error) {
       console.error("Error creating task in storage:", error);
