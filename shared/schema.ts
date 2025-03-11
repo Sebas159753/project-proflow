@@ -33,7 +33,7 @@ export const insertTaskSchema = createInsertSchema(tasks, {
   description: z.string().min(1, "Description is required"),
   status: z.enum([TaskStatus.TODO, TaskStatus.IN_PROGRESS, TaskStatus.COMPLETED, TaskStatus.REVIEW]),
   progress: z.number().min(0).max(100).default(0),
-  dueDate: z.date().transform(date => date.toISOString()),
+  dueDate: z.date(),
   assignedUserIds: z.number().array().default([])
 }).omit({ id: true });
 

@@ -1,4 +1,4 @@
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -63,11 +63,14 @@ export function NewTaskDialog({ open, onOpenChange, users }: NewTaskDialogProps)
   async function onSubmit(data: any) {
     try {
       console.log("Submitting task data:", data);
-      const response = await apiRequest("POST", "/api/tasks", {
+
+      // Asegurarse de que la fecha sea un objeto Date
+      const taskData = {
         ...data,
-        // Ya no necesitamos convertir la fecha aquí porque el schema lo hace
-        dueDate: data.dueDate
-      });
+        dueDate: new Date(data.dueDate)
+      };
+
+      const response = await apiRequest("POST", "/api/tasks", taskData);
       console.log("Task creation response:", response);
 
       queryClient.invalidateQueries({ queryKey: ["/api/tasks"] });
@@ -99,9 +102,12 @@ export function NewTaskDialog({ open, onOpenChange, users }: NewTaskDialogProps)
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="sm:max-w-[425px]" aria-describedby="task-form-description">
         <DialogHeader>
           <DialogTitle>Crear Nueva Tarea</DialogTitle>
+          <DialogDescription id="task-form-description">
+            Completa el formulario para crear una nueva tarea en el tablero.
+          </DialogDescription>
         </DialogHeader>
 
         <Form {...form}>
