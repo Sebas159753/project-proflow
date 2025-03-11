@@ -1,11 +1,25 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertTaskSchema, insertPomodoroSessionSchema, insertBadgeSchema } from "@shared/schema";
+import { updateUserPointsSchema } from "@shared/schema";
 import { z } from "zod";
 
 const insertUserSchema = z.object({
   name: z.string().min(1, "El nombre es requerido")
+});
+
+const insertTaskSchema = z.object({
+  title: z.string().min(1, "El título es requerido"),
+  description: z.string().min(1, "La descripción es requerida"),
+  status: z.string(),
+  priority: z.string(),
+  progress: z.number().min(0).max(100).default(0),
+  dueDate: z.string(),
+  assignedUserIds: z.number().array().default([]),
+  pomodoroCount: z.number().min(1).max(10).default(4),
+  pomodoroDuration: z.number().min(5).max(60).default(25),
+  shortBreakDuration: z.number().min(1).max(30).default(5),
+  longBreakDuration: z.number().min(5).max(60).default(15)
 });
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -96,7 +110,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Nuevo endpoint para actualizar usuarios
   app.patch("/api/users/:id", async (req, res) => {
     const id = parseInt(req.params.id);
     if (isNaN(id)) {
@@ -119,6 +132,45 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({
         error: "Error interno del servidor",
         message: "No se pudo actualizar el usuario"
+      });
+    }
+  });
+
+  // Nuevo endpoint para actualizar puntos de usuario
+  app.post("/api/users/points", async (req, res) => {
+    try {
+      console.log("[Points Update] Request received:", req.body);
+      const result = updateUserPointsSchema.safeParse(req.body);
+
+      if (!result.success) {
+        console.log("[Points Update] Validation failed:", result.error.errors);
+        return res.status(400).json({
+          error: "Datos inválidos",
+          details: result.error.errors
+        });
+      }
+
+      const { userId, points } = result.data;
+      console.log(`[Points Update] Updating points for user ${userId}: +${points} points`);
+
+      // Obtener usuario actual para calcular nuevo total
+      const currentUser = await storage.getUsers().then(users => users.find(u => u.id === userId));
+      if (!currentUser) {
+        throw new Error(`Usuario con ID ${userId} no encontrado`);
+      }
+
+      const newPoints = (currentUser.points || 0) + points;
+      console.log(`[Points Update] New total points will be: ${newPoints}`);
+
+      const user = await storage.updateUser(userId, { points: newPoints });
+      console.log("[Points Update] Points updated successfully:", user);
+
+      res.json(user);
+    } catch (error) {
+      console.error("[Points Update] Error updating points:", error);
+      res.status(500).json({
+        error: "Error interno del servidor",
+        message: "No se pudieron actualizar los puntos"
       });
     }
   });

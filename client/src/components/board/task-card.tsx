@@ -64,12 +64,9 @@ export function TaskCard({ task, users }: TaskCardProps) {
     setIsUpdating(true);
 
     try {
-      await apiRequest(`/api/tasks/${task.id}`, {
-        method: 'PATCH',
-        body: {
-          progress: progressValue,
-          status: progressValue === 100 ? TaskStatus.COMPLETED : task.status
-        }
+      await apiRequest(`/api/tasks/${task.id}`, 'PATCH', {
+        progress: progressValue,
+        status: progressValue === 100 ? TaskStatus.COMPLETED : task.status
       });
 
       // Si la tarea se completó, otorgar puntos al usuario asignado
@@ -101,9 +98,7 @@ export function TaskCard({ task, users }: TaskCardProps) {
 
   const handleDelete = async () => {
     try {
-      await apiRequest(`/api/tasks/${task.id}`, {
-        method: 'DELETE'
-      });
+      await apiRequest(`/api/tasks/${task.id}`, 'DELETE');
       queryClient.invalidateQueries({ queryKey: ["/api/tasks"] });
 
       toast({
@@ -201,7 +196,7 @@ export function TaskCard({ task, users }: TaskCardProps) {
                   <PomodoroTimer
                     taskId={task.id}
                     userId={activeUserId}
-                    onComplete={handleProgressChange}
+                    onComplete={() => handleProgressChange([100])}
                   />
                 )}
               </div>

@@ -12,15 +12,11 @@ export function usePoints() {
       try {
         // Obtener puntos basados en la prioridad
         const points = GamePoints.TASK_COMPLETION[task.priority];
-        
-        // Actualizar puntos del usuario
-        await apiRequest('/api/users/points', {
-          method: 'POST',
-          body: {
-            userId,
-            points,
-            taskCompleted: true
-          }
+
+        await apiRequest('/api/users/points', 'POST', {
+          userId,
+          points,
+          taskCompleted: true
         });
 
         // Invalidar queries para refrescar los datos
