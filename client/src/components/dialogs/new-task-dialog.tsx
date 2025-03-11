@@ -10,6 +10,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { TaskStatus, insertTaskSchema, type User } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
+import { MultiSelect } from "@/components/ui/multi-select";
 
 interface NewTaskDialogProps {
   open: boolean;
@@ -135,6 +136,28 @@ export function NewTaskDialog({ open, onOpenChange, users }: NewTaskDialogProps)
                     <Input 
                       type="date"
                       {...field}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="assignedUserIds"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Responsables</FormLabel>
+                  <FormControl>
+                    <MultiSelect
+                      options={users.map(user => ({
+                        value: user.id.toString(),
+                        label: user.name
+                      }))}
+                      selected={field.value.map(String)}
+                      onChange={values => field.onChange(values.map(Number))}
+                      placeholder="Selecciona responsables"
                     />
                   </FormControl>
                   <FormMessage />

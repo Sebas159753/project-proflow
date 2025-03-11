@@ -2,6 +2,12 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { insertTaskSchema, insertPomodoroSessionSchema } from "@shared/schema";
+import { z } from "zod";
+
+const insertUserSchema = z.object({
+  name: z.string().min(1, "El nombre es requerido"),
+  avatar: z.string().url("La URL del avatar es inválida")
+});
 
 export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/tasks", async (_req, res) => {
@@ -53,7 +59,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.json(users);
   });
 
-  // Nuevas rutas para pomodoro sessions
+  app.post("/api/users", async (req, res) => {
+    try {
+      const result = insertUserSchema.safeParse(req.body);
+
+      if (!result.success) {
+        return res.status(400).json({
+          error: "Datos inválidos",
+          details: result.error.errors
+        });
+      }
+
+      const user = await storage.createUser(result.data);
+      res.json(user);
+    } catch (error) {
+      console.error("Error al crear el usuario:", error);
+      res.status(500).json({
+        error: "Error interno del servidor",
+        message: "No se pudo crear el usuario"
+      });
+    }
+  });
+
+  // Rutas para pomodoro sessions
   app.get("/api/pomodoro-sessions", async (_req, res) => {
     const sessions = await storage.getPomodoroSessions();
     res.json(sessions);
