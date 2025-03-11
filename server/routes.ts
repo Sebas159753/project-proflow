@@ -1,7 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertTaskSchema, insertPomodoroSessionSchema } from "@shared/schema";
+import { insertTaskSchema, insertPomodoroSessionSchema, insertBadgeSchema } from "@shared/schema";
 import { z } from "zod";
 
 const insertUserSchema = z.object({
@@ -119,6 +119,46 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({
         error: "Error interno del servidor",
         message: "No se pudo actualizar el usuario"
+      });
+    }
+  });
+
+  // Nuevos endpoints para badges
+  app.get("/api/users/:userId/badges", async (req, res) => {
+    const userId = parseInt(req.params.userId);
+    if (isNaN(userId)) {
+      return res.status(400).json({ error: "ID de usuario inválido" });
+    }
+    try {
+      const badges = await storage.getBadges(userId);
+      res.json(badges);
+    } catch (error) {
+      console.error("Error al obtener badges:", error);
+      res.status(500).json({
+        error: "Error interno del servidor",
+        message: "No se pudieron obtener los badges"
+      });
+    }
+  });
+
+  app.post("/api/badges", async (req, res) => {
+    try {
+      const result = insertBadgeSchema.safeParse(req.body);
+
+      if (!result.success) {
+        return res.status(400).json({
+          error: "Datos inválidos",
+          details: result.error.errors
+        });
+      }
+
+      const badge = await storage.createBadge(result.data);
+      res.json(badge);
+    } catch (error) {
+      console.error("Error al crear el badge:", error);
+      res.status(500).json({
+        error: "Error interno del servidor",
+        message: "No se pudo crear el badge"
       });
     }
   });

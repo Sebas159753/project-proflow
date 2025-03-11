@@ -22,6 +22,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { motion } from "framer-motion";
 import type { User } from "@shared/schema";
+import { BadgeDisplay } from "@/components/badges/badge-display";
 
 export default function People() {
   const [showAddPerson, setShowAddPerson] = useState(false);
@@ -118,7 +119,7 @@ export default function People() {
             >
               <Card>
                 <CardContent className="p-6">
-                  <div className="flex items-center justify-between">
+                  <div className="flex items-center justify-between mb-4">
                     <h3 className="font-semibold">{user.name}</h3>
                     <Button 
                       variant="outline" 
@@ -132,6 +133,7 @@ export default function People() {
                       Editar
                     </Button>
                   </div>
+                  <BadgeDisplay userId={user.id} />
                 </CardContent>
               </Card>
             </motion.div>

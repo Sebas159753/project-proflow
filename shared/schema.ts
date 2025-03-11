@@ -18,9 +18,29 @@ export const TaskPriority = {
 export type TaskStatusType = typeof TaskStatus[keyof typeof TaskStatus];
 export type TaskPriorityType = typeof TaskPriority[keyof typeof TaskPriority];
 
+// Nueva definición para los tipos de badges
+export const BadgeType = {
+  TASK_MASTER: "Task Master",
+  EARLY_BIRD: "Early Bird",
+  TEAM_PLAYER: "Team Player",
+  PRODUCTIVITY_KING: "Productivity King",
+  DEADLINE_CRUSHER: "Deadline Crusher"
+} as const;
+
+export type BadgeTypeKey = keyof typeof BadgeType;
+export type BadgeTypeValue = typeof BadgeType[BadgeTypeKey];
+
 export const users = pgTable("users", {
   id: serial("id").primaryKey(),
   name: text("name").notNull(),
+});
+
+export const badges = pgTable("badges", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull(),
+  type: text("type").notNull().$type<BadgeTypeValue>(),
+  awardedAt: timestamp("awarded_at").notNull().defaultNow(),
+  description: text("description").notNull(),
 });
 
 export const tasks = pgTable("tasks", {
@@ -55,10 +75,25 @@ export const pomodoroSessions = pgTable("pomodoro_sessions", {
   completed: integer("completed").notNull().default(0),
 });
 
+// Schema para insertar badges
+export const insertBadgeSchema = z.object({
+  userId: z.number(),
+  type: z.enum([
+    BadgeType.TASK_MASTER,
+    BadgeType.EARLY_BIRD,
+    BadgeType.TEAM_PLAYER,
+    BadgeType.PRODUCTIVITY_KING,
+    BadgeType.DEADLINE_CRUSHER
+  ]),
+  description: z.string()
+});
+
 export type InsertTask = z.infer<typeof insertTaskSchema>;
 export type Task = typeof tasks.$inferSelect;
 export type User = typeof users.$inferSelect;
 export type PomodoroSession = typeof pomodoroSessions.$inferSelect;
+export type Badge = typeof badges.$inferSelect;
+export type InsertBadge = z.infer<typeof insertBadgeSchema>;
 export type InsertPomodoroSession = z.infer<typeof insertPomodoroSessionSchema>;
 
 // Schema para insertar sesiones de pomodoro

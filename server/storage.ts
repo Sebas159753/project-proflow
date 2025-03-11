@@ -1,4 +1,4 @@
-import { Task, InsertTask, User, PomodoroSession, InsertPomodoroSession, tasks, users, pomodoroSessions, TaskStatus } from "@shared/schema";
+import { Task, InsertTask, User, PomodoroSession, InsertPomodoroSession, tasks, users, pomodoroSessions, TaskStatus, badges, Badge, InsertBadge } from "@shared/schema";
 import { db } from "./db";
 import { eq } from "drizzle-orm";
 
@@ -12,6 +12,9 @@ export interface IStorage {
   updateUser(id: number, user: Partial<User>): Promise<User>;
   getPomodoroSessions(): Promise<PomodoroSession[]>;
   createPomodoroSession(session: InsertPomodoroSession): Promise<PomodoroSession>;
+  // Nuevos métodos para badges
+  getBadges(userId: number): Promise<Badge[]>;
+  createBadge(badge: InsertBadge): Promise<Badge>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -76,6 +79,26 @@ export class DatabaseStorage implements IStorage {
     const [newSession] = await db.insert(pomodoroSessions).values(session).returning();
     return newSession;
   }
+
+  // Nuevos métodos para badges
+  async getBadges(userId: number): Promise<Badge[]> {
+    return await db
+      .select()
+      .from(badges)
+      .where(eq(badges.userId, userId));
+  }
+
+  async createBadge(badge: InsertBadge): Promise<Badge> {
+    const [newBadge] = await db
+      .insert(badges)
+      .values({
+        ...badge,
+        awardedAt: new Date()
+      })
+      .returning();
+    return newBadge;
+  }
+
   async initializeSampleData() {
     // Insertar usuarios de ejemplo
     const sampleUsers = [
