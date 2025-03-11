@@ -15,7 +15,7 @@ const columns = [
   { id: TaskStatus.TODO, title: "To-Do", className: "bg-[#EDF6FF]" },
   { id: TaskStatus.IN_PROGRESS, title: "On Progress", className: "bg-[#CCE5FF]" },
   { id: TaskStatus.REVIEW, title: "Under Review", className: "bg-[#66B2FF]" },
-  { id: TaskStatus.COMPLETED, title: "Completed", className: "bg-[#0066CC]" }
+  { id: TaskStatus.COMPLETED, title: "Completed", className: "bg-blue-800" }
 ];
 
 export function KanbanBoard({ tasks, users }: KanbanBoardProps) {
