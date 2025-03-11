@@ -1,5 +1,7 @@
 import { Sidebar } from "@/components/layout/sidebar";
-import { Button } from "@/components/ui/button";
+import { 
+  Button 
+} from "@/components/ui/button";
 import { 
   Card, 
   CardContent
@@ -39,7 +41,9 @@ export default function People() {
         name: newPerson.name,
       });
 
-      queryClient.invalidateQueries({ queryKey: ["/api/users"] });
+      // Invalidar la caché y esperar a que se actualice
+      await queryClient.invalidateQueries({ queryKey: ["/api/users"] });
+      await queryClient.refetchQueries({ queryKey: ["/api/users"] });
 
       toast({
         title: "¡Éxito!",
@@ -66,8 +70,9 @@ export default function People() {
         name: editingPerson.name,
       });
 
-      // Invalidar la caché y forzar una actualización
+      // Invalidar la caché y forzar una actualización inmediata
       await queryClient.invalidateQueries({ queryKey: ["/api/users"] });
+      await queryClient.refetchQueries({ queryKey: ["/api/users"] });
 
       toast({
         title: "¡Éxito!",
