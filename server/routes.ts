@@ -10,12 +10,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   app.post("/api/tasks", async (req, res) => {
+    console.log("Creating task with data:", req.body);
     const result = insertTaskSchema.safeParse(req.body);
     if (!result.success) {
+      console.error("Task validation failed:", result.error);
       return res.status(400).json({ error: result.error });
     }
-    const task = await storage.createTask(result.data);
-    res.json(task);
+    try {
+      const task = await storage.createTask(result.data);
+      res.json(task);
+    } catch (error) {
+      console.error("Error creating task in storage:", error);
+      res.status(500).json({ error: "Failed to create task" });
+    }
   });
 
   app.patch("/api/tasks/:id", async (req, res) => {

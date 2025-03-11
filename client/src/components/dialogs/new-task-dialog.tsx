@@ -40,10 +40,12 @@ export function NewTaskDialog({ open, onOpenChange, users }: NewTaskDialogProps)
 
   async function onSubmit(data: any) {
     try {
-      await apiRequest("POST", "/api/tasks", {
+      console.log("Submitting task data:", data);
+      const response = await apiRequest("POST", "/api/tasks", {
         ...data,
         dueDate: data.dueDate.toISOString()
       });
+      console.log("Task creation response:", response);
 
       queryClient.invalidateQueries({ queryKey: ["/api/tasks"] });
       toast({
