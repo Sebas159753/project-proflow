@@ -15,8 +15,26 @@ export const TaskPriority = {
   URGENT: "Urgente"
 } as const;
 
+// Puntos por acción
+export const GamePoints = {
+  TASK_COMPLETION: 100,
+  POMODORO_COMPLETION: 20,
+  EARLY_COMPLETION: 50,  // Completar antes de la fecha límite
+  STREAK_BONUS: 30,      // Bonus por completar tareas varios días seguidos
+} as const;
+
+// Niveles de usuario
+export const UserLevels = {
+  NOVICE: { name: "Novato", minPoints: 0 },
+  APPRENTICE: { name: "Aprendiz", minPoints: 500 },
+  EXPERT: { name: "Experto", minPoints: 1000 },
+  MASTER: { name: "Maestro", minPoints: 2000 },
+  LEGEND: { name: "Leyenda", minPoints: 5000 }
+} as const;
+
 export type TaskStatusType = typeof TaskStatus[keyof typeof TaskStatus];
 export type TaskPriorityType = typeof TaskPriority[keyof typeof TaskPriority];
+export type UserLevelType = keyof typeof UserLevels;
 
 // Nueva definición para los tipos de badges
 export const BadgeType = {
@@ -33,6 +51,10 @@ export type BadgeTypeValue = typeof BadgeType[BadgeTypeKey];
 export const users = pgTable("users", {
   id: serial("id").primaryKey(),
   name: text("name").notNull(),
+  points: integer("points").notNull().default(0),
+  level: text("level").notNull().$type<UserLevelType>().default("NOVICE"),
+  taskStreak: integer("task_streak").notNull().default(0),
+  lastTaskCompletionDate: timestamp("last_task_completion").default(null),
 });
 
 export const badges = pgTable("badges", {
@@ -114,3 +136,14 @@ export const insertPomodoroSessionSchema = z.object({
   type: z.enum(["work", "break", "long_break"]),
   completed: z.number().default(0)
 });
+
+// Schema para actualizar puntos de usuario
+export const updateUserPointsSchema = z.object({
+  userId: z.number(),
+  points: z.number(),
+  taskCompleted: z.boolean().optional(),
+  pomodoroCompleted: z.boolean().optional(),
+  earlyCompletion: z.boolean().optional(),
+});
+
+export type UpdateUserPoints = z.infer<typeof updateUserPointsSchema>;
