@@ -7,6 +7,7 @@ import {
   Users,
   BarChart3
 } from "lucide-react";
+import { LogoWithText } from "@/components/brand/logo";
 
 const menuItems = [
   { icon: LayoutDashboard, label: "Panel", href: "/" },
@@ -21,9 +22,7 @@ export function Sidebar() {
   return (
     <div className="w-64 border-r bg-[#0066CC]">
       <div className="p-6">
-        <h1 className="text-xl font-bold text-white">
-          To do Task Management
-        </h1>
+        <LogoWithText className="text-white" />
       </div>
       <nav className="space-y-2 px-4">
         {menuItems.map((item) => (
