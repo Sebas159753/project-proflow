@@ -19,6 +19,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { motion } from "framer-motion";
+import type { User } from "@shared/schema";
 
 export default function People() {
   const [showAddPerson, setShowAddPerson] = useState(false);
@@ -28,7 +29,7 @@ export default function People() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const { data: users, isLoading } = useQuery({
+  const { data: users = [], isLoading } = useQuery<User[]>({
     queryKey: ["/api/users"],
   });
 
@@ -65,7 +66,8 @@ export default function People() {
         name: editingPerson.name,
       });
 
-      queryClient.invalidateQueries({ queryKey: ["/api/users"] });
+      // Invalidar la caché y forzar una actualización
+      await queryClient.invalidateQueries({ queryKey: ["/api/users"] });
 
       toast({
         title: "¡Éxito!",
@@ -76,6 +78,7 @@ export default function People() {
       setShowEditPerson(false);
       setEditingPerson(null);
     } catch (error) {
+      console.error("Error al actualizar:", error);
       toast({
         variant: "destructive",
         title: "Error",
@@ -101,7 +104,7 @@ export default function People() {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {users.map((user: any) => (
+          {users.map((user) => (
             <motion.div
               key={user.id}
               initial={{ opacity: 0, y: 20 }}
