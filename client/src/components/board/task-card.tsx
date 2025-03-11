@@ -14,7 +14,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Slider } from "@/components/ui/slider";
 import { EditTaskDialog } from "../dialogs/edit-task-dialog";
 import { usePoints } from "@/hooks/use-points";
-import { Dialog, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from "@/components/ui/dialog";
+//import { Dialog, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from "@/components/ui/dialog"; //Removed
 import { cn } from "@/lib/utils";
 
 
@@ -46,7 +46,7 @@ export function TaskCard({ task, users }: TaskCardProps) {
   const [isUpdating, setIsUpdating] = useState(false);
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [showCelebration, setShowCelebration] = useState(false);
-  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  //const [showDeleteDialog, setShowDeleteDialog] = useState(false); //Removed
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const { awardPoints } = usePoints();
@@ -117,7 +117,7 @@ export function TaskCard({ task, users }: TaskCardProps) {
         description: "La tarea ha sido eliminada correctamente",
         variant: "default",
       });
-      setShowDeleteDialog(false);
+      //setShowDeleteDialog(false); //Removed
     } catch (error) {
       console.error("Error al eliminar la tarea:", error);
       toast({
@@ -163,7 +163,7 @@ export function TaskCard({ task, users }: TaskCardProps) {
                 variant="ghost"
                 size="sm"
                 className="text-red-500 hover:text-red-700 hover:bg-red-100 transition-colors duration-200"
-                onClick={() => setShowDeleteDialog(true)}
+                onClick={handleDeleteTask} // Changed to directly call handleDeleteTask
               >
                 <Trash2 className="h-4 w-4" />
               </Button>
@@ -270,23 +270,6 @@ export function TaskCard({ task, users }: TaskCardProps) {
         open={showEditDialog}
         onOpenChange={setShowEditDialog}
       />
-      <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
-        <DialogHeader>
-          <DialogTitle>Eliminar Tarea</DialogTitle>
-          <DialogClose />
-        </DialogHeader>
-        <DialogDescription>
-          ¿Estás seguro de que deseas eliminar la tarea "{task.title}"? Esta acción no se puede deshacer.
-        </DialogDescription>
-        <DialogFooter>
-          <Button variant="outline" onClick={() => setShowDeleteDialog(false)}>
-            Cancelar
-          </Button>
-          <Button variant="destructive" onClick={handleDeleteTask}>
-            Eliminar
-          </Button>
-        </DialogFooter>
-      </Dialog>
     </motion.div>
   );
 }
