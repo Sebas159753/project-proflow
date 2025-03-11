@@ -17,6 +17,28 @@ interface KanbanBoardProps {
 
 // Definir el orden específico de las columnas
 const columns = [
+  { 
+    id: TaskStatus.TODO, 
+    title: "Por hacer", 
+    className: "bg-white border border-gray-200"
+  },
+  { 
+    id: TaskStatus.IN_PROGRESS, 
+    title: "En progreso", 
+    className: "bg-blue-100 border border-blue-200" 
+  },
+  { 
+    id: TaskStatus.REVIEW, 
+    title: "En revisión", 
+    className: "bg-purple-100 border border-purple-200" 
+  },
+  { 
+    id: TaskStatus.COMPLETED, 
+    title: "Completado", 
+    className: "bg-[#094780] text-white border border-blue-800" 
+  }
+];s
+const columns = [
   { id: TaskStatus.TODO, title: "To-Do", className: "bg-[#EDF6FF]" },
   { id: TaskStatus.IN_PROGRESS, title: "On Progress", className: "bg-[#CCE5FF]" },
   { id: TaskStatus.REVIEW, title: "Under Review", className: "bg-[#66B2FF]" },
@@ -96,9 +118,9 @@ export function KanbanBoard({ tasks, users }: KanbanBoardProps) {
               transition={{ duration: 0.3, delay: index * 0.1 }}
               className={`rounded-lg p-4 transition-all duration-300 hover:shadow-lg ${column.className}`}
             >
-              <h3 className={`font-semibold mb-4 flex items-center ${column.id === TaskStatus.COMPLETED ? 'text-white' : 'text-gray-800'}`}>
+              <h3 className={`font-semibold mb-4 flex items-center ${column.id === TaskStatus.COMPLETED ? 'text-white' : column.id === TaskStatus.IN_PROGRESS || column.id === TaskStatus.REVIEW ? 'text-gray-900' : 'text-gray-800'}`}>
                 {column.title}
-                <span className={`ml-2 text-sm ${column.id === TaskStatus.COMPLETED ? 'text-white/70' : 'text-gray-600'}`}>
+                <span className={`ml-2 text-sm ${column.id === TaskStatus.COMPLETED ? 'text-white/80' : column.id === TaskStatus.IN_PROGRESS ? 'text-blue-700' : column.id === TaskStatus.REVIEW ? 'text-purple-700' : 'text-gray-600'}`}>
                   ({getTasksByStatus(column.id).length})
                 </span>
               </h3>
