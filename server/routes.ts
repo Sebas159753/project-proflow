@@ -1,7 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { updateUserPointsSchema } from "@shared/schema";
+import { updateUserPointsSchema, TaskStatus } from "@shared/schema";
 import { z } from "zod";
 
 const insertUserSchema = z.object({
@@ -41,7 +41,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const task = await storage.createTask({
         ...result.data,
-        dueDate: new Date(result.data.dueDate)
+        dueDate: new Date(result.data.dueDate),
+        status: result.data.status as TaskStatus
       });
 
       res.json(task);
@@ -136,7 +137,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Nuevo endpoint para actualizar puntos de usuario
   app.post("/api/users/points", async (req, res) => {
     try {
       console.log("[Points Update] Request received:", req.body);
@@ -151,94 +151,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const { userId, points } = result.data;
-      console.log(`[Points Update] Updating points for user ${userId}: +${points} points`);
+      console.log(`[Points Update] Processing points update for user ${userId}: +${points} points`);
 
-      // Obtener usuario actual para calcular nuevo total
-      const currentUser = await storage.getUsers().then(users => users.find(u => u.id === userId));
+      // Obtener usuario actual
+      const users = await storage.getUsers();
+      const currentUser = users.find(u => u.id === userId);
+
       if (!currentUser) {
-        throw new Error(`Usuario con ID ${userId} no encontrado`);
+        console.log(`[Points Update] User ${userId} not found`);
+        return res.status(404).json({
+          error: "Usuario no encontrado",
+          message: `No se encontró el usuario con ID ${userId}`
+        });
       }
 
       const newPoints = (currentUser.points || 0) + points;
-      console.log(`[Points Update] New total points will be: ${newPoints}`);
+      console.log(`[Points Update] Calculating new points total: ${currentUser.points} + ${points} = ${newPoints}`);
 
-      const user = await storage.updateUser(userId, { points: newPoints });
-      console.log("[Points Update] Points updated successfully:", user);
+      const updatedUser = await storage.updateUser(userId, { 
+        points: newPoints,
+        lastTaskCompletionDate: new Date()
+      });
 
-      res.json(user);
+      console.log("[Points Update] User updated successfully:", updatedUser);
+      res.json(updatedUser);
     } catch (error) {
       console.error("[Points Update] Error updating points:", error);
       res.status(500).json({
         error: "Error interno del servidor",
         message: "No se pudieron actualizar los puntos"
-      });
-    }
-  });
-
-  // Nuevos endpoints para badges
-  app.get("/api/users/:userId/badges", async (req, res) => {
-    const userId = parseInt(req.params.userId);
-    if (isNaN(userId)) {
-      return res.status(400).json({ error: "ID de usuario inválido" });
-    }
-    try {
-      const badges = await storage.getBadges(userId);
-      res.json(badges);
-    } catch (error) {
-      console.error("Error al obtener badges:", error);
-      res.status(500).json({
-        error: "Error interno del servidor",
-        message: "No se pudieron obtener los badges"
-      });
-    }
-  });
-
-  app.post("/api/badges", async (req, res) => {
-    try {
-      const result = insertBadgeSchema.safeParse(req.body);
-
-      if (!result.success) {
-        return res.status(400).json({
-          error: "Datos inválidos",
-          details: result.error.errors
-        });
-      }
-
-      const badge = await storage.createBadge(result.data);
-      res.json(badge);
-    } catch (error) {
-      console.error("Error al crear el badge:", error);
-      res.status(500).json({
-        error: "Error interno del servidor",
-        message: "No se pudo crear el badge"
-      });
-    }
-  });
-
-  // Rutas para pomodoro sessions
-  app.get("/api/pomodoro-sessions", async (_req, res) => {
-    const sessions = await storage.getPomodoroSessions();
-    res.json(sessions);
-  });
-
-  app.post("/api/pomodoro-sessions", async (req, res) => {
-    try {
-      const result = insertPomodoroSessionSchema.safeParse(req.body);
-
-      if (!result.success) {
-        return res.status(400).json({ 
-          error: "Datos inválidos",
-          details: result.error.errors 
-        });
-      }
-
-      const session = await storage.createPomodoroSession(result.data);
-      res.json(session);
-    } catch (error) {
-      console.error("Error al crear la sesión de pomodoro:", error);
-      res.status(500).json({ 
-        error: "Error interno del servidor",
-        message: "No se pudo crear la sesión de pomodoro" 
       });
     }
   });

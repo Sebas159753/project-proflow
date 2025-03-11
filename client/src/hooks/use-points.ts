@@ -12,6 +12,7 @@ export function usePoints() {
       try {
         // Obtener puntos basados en la prioridad
         const points = GamePoints.TASK_COMPLETION[task.priority];
+        console.log(`[Points] Awarding ${points} points to user ${userId} for task priority ${task.priority}`);
 
         await apiRequest('/api/users/points', 'POST', {
           userId,
