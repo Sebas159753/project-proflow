@@ -1,15 +1,20 @@
-import { Task, User, tasks, users, TaskStatus } from "@shared/schema";
+import { Task, InsertTask, User, PomodoroSession, InsertPomodoroSession, tasks, users, pomodoroSessions, TaskStatus, badges, Badge, InsertBadge } from "@shared/schema";
 import { db } from "./db";
 import { eq } from "drizzle-orm";
 
 export interface IStorage {
   getTasks(): Promise<Task[]>;
-  createTask(task: Omit<Task, "id">): Promise<Task>;
+  createTask(task: InsertTask): Promise<Task>;
   updateTask(id: number, task: Partial<Task>): Promise<Task>;
   deleteTask(id: number): Promise<void>;
   getUsers(): Promise<User[]>;
   createUser(user: { name: string }): Promise<User>;
   updateUser(id: number, user: Partial<User>): Promise<User>;
+  getPomodoroSessions(): Promise<PomodoroSession[]>;
+  createPomodoroSession(session: InsertPomodoroSession): Promise<PomodoroSession>;
+  // Nuevos métodos para badges
+  getBadges(userId: number): Promise<Badge[]>;
+  createBadge(badge: InsertBadge): Promise<Badge>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -17,7 +22,7 @@ export class DatabaseStorage implements IStorage {
     return await db.select().from(tasks);
   }
 
-  async createTask(task: Omit<Task, "id">): Promise<Task> {
+  async createTask(task: InsertTask): Promise<Task> {
     const [newTask] = await db.insert(tasks).values({
       ...task,
       dueDate: new Date(task.dueDate)
@@ -64,6 +69,34 @@ export class DatabaseStorage implements IStorage {
     }
 
     return updatedUser;
+  }
+
+  async getPomodoroSessions(): Promise<PomodoroSession[]> {
+    return await db.select().from(pomodoroSessions);
+  }
+
+  async createPomodoroSession(session: InsertPomodoroSession): Promise<PomodoroSession> {
+    const [newSession] = await db.insert(pomodoroSessions).values(session).returning();
+    return newSession;
+  }
+
+  // Nuevos métodos para badges
+  async getBadges(userId: number): Promise<Badge[]> {
+    return await db
+      .select()
+      .from(badges)
+      .where(eq(badges.userId, userId));
+  }
+
+  async createBadge(badge: InsertBadge): Promise<Badge> {
+    const [newBadge] = await db
+      .insert(badges)
+      .values({
+        ...badge,
+        awardedAt: new Date()
+      })
+      .returning();
+    return newBadge;
   }
 
   async initializeSampleData() {
