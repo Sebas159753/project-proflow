@@ -14,7 +14,6 @@ import { useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useState } from "react";
 import { Calendar } from "@/components/ui/calendar";
-import { format } from "date-fns";
 import {
   Select,
   SelectContent,
@@ -37,9 +36,13 @@ export function EditTaskDialog({ task, users, open, onOpenChange }: EditTaskDial
     status: task.status,
     priority: task.priority,
     dueDate: new Date(task.dueDate),
-    assignedUserIds: task.assignedUserIds
+    assignedUserIds: task.assignedUserIds,
+    pomodoroCount: task.pomodoroCount,
+    pomodoroDuration: task.pomodoroDuration,
+    shortBreakDuration: task.shortBreakDuration,
+    longBreakDuration: task.longBreakDuration
   });
-  
+
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -129,6 +132,51 @@ export function EditTaskDialog({ task, users, open, onOpenChange }: EditTaskDial
                 ))}
               </SelectContent>
             </Select>
+          </div>
+          <div className="space-y-2">
+            <label>Configuración Pomodoro</label>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="text-sm">Número de Pomodoros</label>
+                <Input
+                  type="number"
+                  min={1}
+                  max={10}
+                  value={editedTask.pomodoroCount}
+                  onChange={(e) => setEditedTask(prev => ({ ...prev, pomodoroCount: parseInt(e.target.value) }))}
+                />
+              </div>
+              <div>
+                <label className="text-sm">Duración Pomodoro (min)</label>
+                <Input
+                  type="number"
+                  min={5}
+                  max={60}
+                  value={editedTask.pomodoroDuration}
+                  onChange={(e) => setEditedTask(prev => ({ ...prev, pomodoroDuration: parseInt(e.target.value) }))}
+                />
+              </div>
+              <div>
+                <label className="text-sm">Descanso Corto (min)</label>
+                <Input
+                  type="number"
+                  min={1}
+                  max={30}
+                  value={editedTask.shortBreakDuration}
+                  onChange={(e) => setEditedTask(prev => ({ ...prev, shortBreakDuration: parseInt(e.target.value) }))}
+                />
+              </div>
+              <div>
+                <label className="text-sm">Descanso Largo (min)</label>
+                <Input
+                  type="number"
+                  min={5}
+                  max={60}
+                  value={editedTask.longBreakDuration}
+                  onChange={(e) => setEditedTask(prev => ({ ...prev, longBreakDuration: parseInt(e.target.value) }))}
+                />
+              </div>
+            </div>
           </div>
           <div className="space-y-2">
             <label>Fecha de vencimiento</label>

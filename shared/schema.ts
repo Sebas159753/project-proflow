@@ -52,6 +52,11 @@ export const tasks = pgTable("tasks", {
   progress: integer("progress").notNull().default(0),
   dueDate: timestamp("due_date").notNull(),
   assignedUserIds: integer("assigned_user_ids").array().notNull().default([]),
+  // Nuevos campos para configuración de Pomodoro
+  pomodoroCount: integer("pomodoro_count").notNull().default(4),
+  pomodoroDuration: integer("pomodoro_duration").notNull().default(25), // en minutos
+  shortBreakDuration: integer("short_break_duration").notNull().default(5), // en minutos
+  longBreakDuration: integer("long_break_duration").notNull().default(15), // en minutos
 });
 
 // Schema para insertar tareas
@@ -62,7 +67,11 @@ export const insertTaskSchema = z.object({
   priority: z.enum([TaskPriority.LOW, TaskPriority.MEDIUM, TaskPriority.HIGH, TaskPriority.URGENT]).default(TaskPriority.MEDIUM),
   progress: z.number().min(0).max(100).default(0),
   dueDate: z.string(),
-  assignedUserIds: z.number().array().default([])
+  assignedUserIds: z.number().array().default([]),
+  pomodoroCount: z.number().min(1).max(10).default(4),
+  pomodoroDuration: z.number().min(5).max(60).default(25),
+  shortBreakDuration: z.number().min(1).max(30).default(5),
+  longBreakDuration: z.number().min(5).max(60).default(15)
 });
 
 export const pomodoroSessions = pgTable("pomodoro_sessions", {
