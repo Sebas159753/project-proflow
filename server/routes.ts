@@ -1,7 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { updateUserPointsSchema, TaskStatus } from "@shared/schema";
+import { TaskStatus, TaskPriority, type TaskStatusType, type TaskPriorityType } from "@shared/schema";
 import { z } from "zod";
 
 const insertUserSchema = z.object({
@@ -11,8 +11,8 @@ const insertUserSchema = z.object({
 const insertTaskSchema = z.object({
   title: z.string().min(1, "El título es requerido"),
   description: z.string().min(1, "La descripción es requerida"),
-  status: z.string(),
-  priority: z.string(),
+  status: z.nativeEnum(TaskStatus),
+  priority: z.nativeEnum(TaskPriority),
   progress: z.number().min(0).max(100).default(0),
   dueDate: z.string(),
   assignedUserIds: z.number().array().default([]),
@@ -23,13 +23,21 @@ const insertTaskSchema = z.object({
 });
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Endpoint de prueba
+  app.get("/ping", (_req, res) => {
+    console.log("[Debug] Ping endpoint called");
+    res.json({ message: "pong" });
+  });
+
   app.get("/api/tasks", async (_req, res) => {
+    console.log("[Debug] Getting all tasks");
     const tasks = await storage.getTasks();
     res.json(tasks);
   });
 
   app.post("/api/tasks", async (req, res) => {
     try {
+      console.log("[Debug] Creating new task:", req.body);
       const result = insertTaskSchema.safeParse(req.body);
 
       if (!result.success) {
@@ -41,13 +49,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const task = await storage.createTask({
         ...result.data,
-        dueDate: new Date(result.data.dueDate),
-        status: result.data.status as TaskStatus
+        status: result.data.status as TaskStatusType,
+        priority: result.data.priority as TaskPriorityType,
+        dueDate: new Date(result.data.dueDate)
       });
 
       res.json(task);
     } catch (error) {
-      console.error("Error al crear la tarea:", error);
+      console.error("[Debug] Error creating task:", error);
       res.status(500).json({ 
         error: "Error interno del servidor",
         message: "No se pudo crear la tarea" 
@@ -85,12 +94,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   app.get("/api/users", async (_req, res) => {
+    console.log("[Debug] Getting all users");
     const users = await storage.getUsers();
     res.json(users);
   });
 
   app.post("/api/users", async (req, res) => {
     try {
+      console.log("[Debug] Creating new user:", req.body);
       const result = insertUserSchema.safeParse(req.body);
 
       if (!result.success) {
@@ -103,7 +114,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const user = await storage.createUser(result.data);
       res.json(user);
     } catch (error) {
-      console.error("Error al crear el usuario:", error);
+      console.error("[Debug] Error creating user:", error);
       res.status(500).json({
         error: "Error interno del servidor",
         message: "No se pudo crear el usuario"
@@ -117,40 +128,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
       return res.status(400).json({ error: "ID de usuario inválido" });
     }
     try {
-      const result = insertUserSchema.partial().safeParse(req.body);
-
-      if (!result.success) {
-        return res.status(400).json({
-          error: "Datos inválidos",
-          details: result.error.errors
-        });
-      }
-
-      const user = await storage.updateUser(id, result.data);
+      const user = await storage.updateUser(id, req.body);
       res.json(user);
     } catch (error) {
-      console.error("Error al actualizar el usuario:", error);
-      res.status(500).json({
-        error: "Error interno del servidor",
-        message: "No se pudo actualizar el usuario"
-      });
+      res.status(404).json({ error: (error as Error).message });
     }
   });
 
   app.post("/api/users/points", async (req, res) => {
     try {
       console.log("[Points Update] Request received:", req.body);
-      const result = updateUserPointsSchema.safeParse(req.body);
 
-      if (!result.success) {
-        console.log("[Points Update] Validation failed:", result.error.errors);
-        return res.status(400).json({
-          error: "Datos inválidos",
-          details: result.error.errors
-        });
-      }
-
-      const { userId, points } = result.data;
+      const { userId, points } = req.body;
       console.log(`[Points Update] Processing points update for user ${userId}: +${points} points`);
 
       // Obtener usuario actual

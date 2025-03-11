@@ -74,6 +74,22 @@ export const updateUserPointsSchema = z.object({
   earlyCompletion: z.boolean().optional(),
 });
 
+// Schema para insertar tareas
+export const insertTaskSchema = z.object({
+  title: z.string().min(1, "El título es requerido"),
+  description: z.string().min(1, "La descripción es requerida"),
+  status: z.nativeEnum(TaskStatus),
+  priority: z.nativeEnum(TaskPriority).default(TaskPriority.MEDIUM),
+  progress: z.number().min(0).max(100).default(0),
+  dueDate: z.string(),
+  assignedUserIds: z.number().array().default([]),
+  pomodoroCount: z.number().min(1).max(10).default(4),
+  pomodoroDuration: z.number().min(5).max(60).default(25),
+  shortBreakDuration: z.number().min(1).max(30).default(5),
+  longBreakDuration: z.number().min(5).max(60).default(15)
+});
+
 export type UpdateUserPoints = z.infer<typeof updateUserPointsSchema>;
+export type InsertTask = z.infer<typeof insertTaskSchema>;
 export type Task = typeof tasks.$inferSelect;
 export type User = typeof users.$inferSelect;

@@ -2,6 +2,8 @@ import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 
+console.log("[Server] Starting application...");
+
 const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
@@ -37,17 +39,18 @@ app.use((req, res, next) => {
 });
 
 (async () => {
+  console.log("[Server] Registering routes...");
   const server = await registerRoutes(app);
 
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
     const status = err.status || err.statusCode || 500;
     const message = err.message || "Internal Server Error";
 
-    console.error("Error occurred:", err);
+    console.error("[Server] Error occurred:", err);
     res.status(status).json({ message });
-    // Removed the throw err line that was causing the server to crash
   });
 
+  console.log("[Server] Setting up environment...");
   if (app.get("env") === "development") {
     await setupVite(app, server);
   } else {
@@ -55,6 +58,7 @@ app.use((req, res, next) => {
   }
 
   const port = 5000;
+  console.log("[Server] Attempting to start server on port", port);
   server.listen({
     port,
     host: "0.0.0.0",
@@ -62,4 +66,9 @@ app.use((req, res, next) => {
   }, () => {
     log(`serving on port ${port}`);
   });
-})();
+
+  console.log("[Server] Server started successfully");
+})().catch(err => {
+  console.error("[Server] Fatal error during startup:", err);
+  process.exit(1);
+});
