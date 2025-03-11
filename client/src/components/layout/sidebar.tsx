@@ -4,14 +4,14 @@ import { Link, useLocation } from "wouter";
 import { 
   LayoutDashboard, 
   Calendar, 
-  Inbox, 
+  Users,
   BarChart3
 } from "lucide-react";
 
 const menuItems = [
   { icon: LayoutDashboard, label: "Overview", href: "/" },
   { icon: Calendar, label: "Calendar", href: "/calendar" },
-  { icon: Inbox, label: "Inbox", href: "/inbox" },
+  { icon: Users, label: "Personas", href: "/people" },
   { icon: BarChart3, label: "Reporting", href: "/reporting" },
 ];
 
