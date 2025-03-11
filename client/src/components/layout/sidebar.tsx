@@ -19,10 +19,10 @@ export function Sidebar() {
   const [location] = useLocation();
 
   return (
-    <div className="w-64 border-r bg-card">
+    <div className="w-64 border-r bg-blue-600">
       <div className="p-6">
-        <h1 className="text-xl font-bold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
-          Project Hub
+        <h1 className="text-xl font-bold text-white">
+          To do Task Management
         </h1>
       </div>
       <nav className="space-y-2 px-4">
@@ -31,8 +31,8 @@ export function Sidebar() {
             <Button
               variant="ghost"
               className={cn(
-                "w-full justify-start gap-3 transition-colors",
-                location === item.href ? "bg-primary/10 text-primary hover:bg-primary/20" : "hover:bg-primary/5"
+                "w-full justify-start gap-3 transition-colors text-white",
+                location === item.href ? "bg-white/20 hover:bg-white/30" : "hover:bg-white/10"
               )}
             >
               <item.icon className="h-4 w-4" />

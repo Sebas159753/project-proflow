@@ -2,12 +2,9 @@ import { Sidebar } from "@/components/layout/sidebar";
 import { Button } from "@/components/ui/button";
 import { 
   Card, 
-  CardContent,
-  CardHeader,
-  CardTitle
+  CardContent
 } from "@/components/ui/card";
 import { Plus, Mail, Edit2 } from "lucide-react";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { 
@@ -24,7 +21,7 @@ import { apiRequest } from "@/lib/queryClient";
 
 export default function People() {
   const [showAddPerson, setShowAddPerson] = useState(false);
-  const [newPerson, setNewPerson] = useState({ name: "", avatar: "" });
+  const [newPerson, setNewPerson] = useState({ name: "" });
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -36,11 +33,11 @@ export default function People() {
     try {
       await apiRequest("POST", "/api/users", {
         name: newPerson.name,
-        avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${newPerson.name}`
+        avatar: "" // Ya no usamos avatares
       });
 
       queryClient.invalidateQueries({ queryKey: ["/api/users"] });
-      
+
       toast({
         title: "¡Éxito!",
         description: "Persona agregada correctamente",
@@ -48,7 +45,7 @@ export default function People() {
       });
 
       setShowAddPerson(false);
-      setNewPerson({ name: "", avatar: "" });
+      setNewPerson({ name: "" });
     } catch (error) {
       toast({
         variant: "destructive",
@@ -68,7 +65,7 @@ export default function People() {
       <div className="flex-1 p-8">
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-2xl font-bold">Gestión de Personas</h1>
-          <Button onClick={() => setShowAddPerson(true)}>
+          <Button onClick={() => setShowAddPerson(true)} className="bg-blue-600 hover:bg-blue-700 text-white">
             <Plus className="h-4 w-4 mr-2" />
             Agregar Persona
           </Button>
@@ -78,25 +75,17 @@ export default function People() {
           {users.map((user: any) => (
             <Card key={user.id}>
               <CardContent className="p-6">
-                <div className="flex items-center gap-4">
-                  <Avatar className="h-16 w-16">
-                    <AvatarImage src={user.avatar} />
-                    <AvatarFallback>
-                      {user.name.split(' ').map((n: string) => n[0]).join('')}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div className="flex-1">
-                    <h3 className="font-semibold">{user.name}</h3>
-                    <div className="flex gap-2 mt-2">
-                      <Button variant="outline" size="sm">
-                        <Mail className="h-4 w-4 mr-2" />
-                        Contactar
-                      </Button>
-                      <Button variant="outline" size="sm">
-                        <Edit2 className="h-4 w-4 mr-2" />
-                        Editar
-                      </Button>
-                    </div>
+                <div className="flex items-center justify-between">
+                  <h3 className="font-semibold">{user.name}</h3>
+                  <div className="flex gap-2">
+                    <Button variant="outline" size="sm">
+                      <Mail className="h-4 w-4 mr-2" />
+                      Contactar
+                    </Button>
+                    <Button variant="outline" size="sm">
+                      <Edit2 className="h-4 w-4 mr-2" />
+                      Editar
+                    </Button>
                   </div>
                 </div>
               </CardContent>
@@ -117,7 +106,7 @@ export default function People() {
                 <label>Nombre</label>
                 <Input
                   value={newPerson.name}
-                  onChange={(e) => setNewPerson({ ...newPerson, name: e.target.value })}
+                  onChange={(e) => setNewPerson({ name: e.target.value })}
                   placeholder="Ingresa el nombre"
                 />
               </div>
@@ -125,7 +114,7 @@ export default function People() {
                 <Button variant="outline" onClick={() => setShowAddPerson(false)}>
                   Cancelar
                 </Button>
-                <Button onClick={handleAddPerson}>
+                <Button onClick={handleAddPerson} className="bg-blue-600 hover:bg-blue-700 text-white">
                   Agregar Persona
                 </Button>
               </div>
