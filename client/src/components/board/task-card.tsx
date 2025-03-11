@@ -105,13 +105,9 @@ export function TaskCard({ task, users }: TaskCardProps) {
 
   const handleDeleteTask = async () => {
     try {
-      await apiRequest(`/api/tasks/${task.id}`, {
-        method: 'DELETE',
-      });
+      await apiRequest('DELETE', `/api/tasks/${task.id}`);
 
-      // Actualizar el caché de las tareas después de eliminar
-      queryClient.invalidateQueries({ queryKey: ['tasks'] });
-
+      queryClient.invalidateQueries({ queryKey: ["/api/tasks"] });
       toast({
         title: "Tarea eliminada",
         description: "La tarea ha sido eliminada correctamente",
