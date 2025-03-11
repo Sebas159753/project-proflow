@@ -2,7 +2,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Form, FormControl, FormField, FormItem, FormLabel } from "@/components/ui/form";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQueryClient } from "@tanstack/react-query";
@@ -43,6 +44,7 @@ export function NewTaskDialog({ open, onOpenChange, users }: NewTaskDialogProps)
         ...data,
         dueDate: data.dueDate.toISOString()
       });
+
       queryClient.invalidateQueries({ queryKey: ["/api/tasks"] });
       toast({
         title: "Success",
@@ -76,8 +78,9 @@ export function NewTaskDialog({ open, onOpenChange, users }: NewTaskDialogProps)
                 <FormItem>
                   <FormLabel>Title</FormLabel>
                   <FormControl>
-                    <Input {...field} />
+                    <Input placeholder="Enter task title" {...field} />
                   </FormControl>
+                  <FormMessage />
                 </FormItem>
               )}
             />
@@ -89,8 +92,37 @@ export function NewTaskDialog({ open, onOpenChange, users }: NewTaskDialogProps)
                 <FormItem>
                   <FormLabel>Description</FormLabel>
                   <FormControl>
-                    <Textarea {...field} />
+                    <Textarea 
+                      placeholder="Enter task description"
+                      {...field} 
+                    />
                   </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="status"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Status</FormLabel>
+                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select a status" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {Object.values(TaskStatus).map((status) => (
+                        <SelectItem key={status} value={status}>
+                          {status}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
                 </FormItem>
               )}
             />
@@ -125,12 +157,11 @@ export function NewTaskDialog({ open, onOpenChange, users }: NewTaskDialogProps)
                         mode="single"
                         selected={field.value}
                         onSelect={field.onChange}
-                        disabled={(date) =>
-                          date < new Date()
-                        }
+                        initialFocus
                       />
                     </PopoverContent>
                   </Popover>
+                  <FormMessage />
                 </FormItem>
               )}
             />
