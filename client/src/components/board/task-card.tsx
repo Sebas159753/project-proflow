@@ -5,13 +5,14 @@ import { TaskStatus, type Task, type User, TaskPriority } from "@shared/schema";
 import { PomodoroTimer } from "../pomodoro/pomodoro-timer";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Timer, Trash2 } from "lucide-react";
+import { Timer, Trash2, Edit } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
 import { motion } from "framer-motion";
 import { Slider } from "@/components/ui/slider";
+import { EditTaskDialog } from "../dialogs/edit-task-dialog";
 
 interface TaskCardProps {
   task: Task;
@@ -37,6 +38,7 @@ export function TaskCard({ task, users }: TaskCardProps) {
   const [showPomodoro, setShowPomodoro] = useState(false);
   const [progress, setProgress] = useState(task.progress);
   const [isUpdating, setIsUpdating] = useState(false);
+  const [showEditDialog, setShowEditDialog] = useState(false);
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
@@ -114,14 +116,24 @@ export function TaskCard({ task, users }: TaskCardProps) {
                 {task.priority}
               </Badge>
             </div>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="text-red-500 hover:text-red-700 hover:bg-red-100 transition-colors duration-200"
-              onClick={handleDelete}
-            >
-              <Trash2 className="h-4 w-4" />
-            </Button>
+            <div className="flex gap-2">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-blue-500 hover:text-blue-700 hover:bg-blue-100 transition-colors duration-200"
+                onClick={() => setShowEditDialog(true)}
+              >
+                <Edit className="h-4 w-4" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-red-500 hover:text-red-700 hover:bg-red-100 transition-colors duration-200"
+                onClick={handleDelete}
+              >
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            </div>
           </div>
 
           <p className="text-sm text-muted-foreground mb-4">
@@ -180,6 +192,13 @@ export function TaskCard({ task, users }: TaskCardProps) {
           </div>
         </CardContent>
       </Card>
+
+      <EditTaskDialog
+        task={task}
+        users={users}
+        open={showEditDialog}
+        onOpenChange={setShowEditDialog}
+      />
     </motion.div>
   );
 }
