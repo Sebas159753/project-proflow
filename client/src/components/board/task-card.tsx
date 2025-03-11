@@ -139,7 +139,7 @@ export function TaskCard({ task, users }: TaskCardProps) {
                 <Slider
                   defaultValue={[progress]}
                   max={100}
-                  step={5}
+                  step={25}
                   className="cursor-pointer"
                   onValueChange={handleProgressChange}
                   disabled={isUpdating}
