@@ -71,6 +71,7 @@ export function TaskCard({ task, users }: TaskCardProps) {
       await apiRequest('PATCH', `/api/tasks/${task.id}`, {
           progress: progressValue,
           status: progressValue === 100 ? TaskStatus.COMPLETED : task.status
+      });
         }
       });
 
