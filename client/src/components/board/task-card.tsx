@@ -56,9 +56,13 @@ export function TaskCard({ task, users = [] }: TaskCardProps) {
   }, [progress]);
 
   // Asegurar que users es un array y task tiene assignedUserIds
-  const assignedUsers = Array.isArray(users) && task?.assignedUserIds 
+  const assignedUsers = Array.isArray(users) && Array.isArray(task?.assignedUserIds) 
     ? users.filter(user => task.assignedUserIds.includes(user.id))
     : [];
+    
+  console.log("Users disponibles:", users);
+  console.log("Task assignedUserIds:", task?.assignedUserIds);
+  console.log("Assigned users:", assignedUsers);
 
   const handleProgressChange = async (value: number[]) => {
     const progressValue = value[0];

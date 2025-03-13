@@ -24,24 +24,13 @@ import {
 
 interface EditTaskDialogProps {
   task: Task;
-  users: User[];
+  users: User[] | undefined;
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }
 
-export function EditTaskDialog({ task, users, open, onOpenChange }: EditTaskDialogProps) {
-  const [editedTask, setEditedTask] = useState({
-    title: task.title,
-    description: task.description,
-    status: task.status,
-    priority: task.priority,
-    dueDate: new Date(task.dueDate),
-    assignedUserIds: task.assignedUserIds,
-    pomodoroCount: task.pomodoroCount,
-    pomodoroDuration: task.pomodoroDuration,
-    shortBreakDuration: task.shortBreakDuration,
-    longBreakDuration: task.longBreakDuration
-  });
+export function EditTaskDialog({ task, users = [], open, onOpenChange }: EditTaskDialogProps) {
+  const [editedTask, setEditedTask] = useState<Task>({ ...task });
 
   const [isSaving, setIsSaving] = useState(false); // Added state for saving indicator
 
@@ -57,7 +46,7 @@ export function EditTaskDialog({ task, users, open, onOpenChange }: EditTaskDial
         ...editedTask,
         dueDate: editedTask.dueDate.toISOString()
       };
-      
+
       // Enviar al servidor
       await fetch(`/api/tasks/${task.id}`, {
         method: 'PATCH',
@@ -206,7 +195,7 @@ export function EditTaskDialog({ task, users, open, onOpenChange }: EditTaskDial
             <label>Asignado a</label>
             <Select
               value={editedTask.assignedUserIds[0]?.toString()}
-              onValueChange={(value) => setEditedTask(prev => ({ ...prev, assignedUserIds: [parseInt(value)] }))}
+              onValueChange={(value) => setEditedTask(prev => ({ ...prev, assignedUserIds: value ? [parseInt(value)] : [] }))}
             >
               <SelectTrigger>
                 <SelectValue />
