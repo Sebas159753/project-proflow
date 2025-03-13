@@ -190,11 +190,11 @@ export function EditTaskDialog({ task, users = [], open, onOpenChange }: EditTas
           <div className="space-y-2">
             <label>Asignado a</label>
             <Select
-              value={editedTask.assignedUserIds.length > 0 ? editedTask.assignedUserIds[0].toString() : ""}
+              value={editedTask.assignedUserIds.length > 0 ? editedTask.assignedUserIds[0].toString() : "no-user"}
               onValueChange={(value) => {
                 setEditedTask(prev => ({ 
                   ...prev, 
-                  assignedUserIds: value ? [parseInt(value)] : [] 
+                  assignedUserIds: value === "no-user" ? [] : [parseInt(value)] 
                 }));
               }}
             >
@@ -209,9 +209,7 @@ export function EditTaskDialog({ task, users = [], open, onOpenChange }: EditTas
                     </SelectItem>
                   ))
                 ) : (
-                  <SelectItem value="" disabled>
-                    No hay usuarios disponibles
-                  </SelectItem>
+                  <SelectItem value="no-user">No hay usuarios disponibles</SelectItem>
                 )}
               </SelectContent>
             </Select>
