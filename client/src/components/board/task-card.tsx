@@ -5,14 +5,15 @@ import { TaskStatus, type Task, type User, TaskPriority } from "@shared/schema";
 import { PomodoroTimer } from "../pomodoro/pomodoro-timer";
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Timer, Trash2, Edit } from "lucide-react";
+import { Timer, Trash2, Edit, Save, X } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
 import { motion, AnimatePresence } from "framer-motion";
 import { Slider } from "@/components/ui/slider";
-import { EditTaskDialog } from "../dialogs/edit-task-dialog";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { usePoints } from "@/hooks/use-points";
 import { cn } from "@/lib/utils";
 
@@ -42,8 +43,14 @@ export function TaskCard({ task, users }: TaskCardProps) {
   const [showPomodoro, setShowPomodoro] = useState(false);
   const [progress, setProgress] = useState(task.progress);
   const [isUpdating, setIsUpdating] = useState(false);
-  const [showEditDialog, setShowEditDialog] = useState(false);
   const [showCelebration, setShowCelebration] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editedTask, setEditedTask] = useState({
+    title: task.title,
+    description: task.description,
+    status: task.status,
+    priority: task.priority,
+  });
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const { awardPoints } = usePoints();
@@ -56,10 +63,10 @@ export function TaskCard({ task, users }: TaskCardProps) {
   }, [progress]);
 
   // Asegurarnos de que task.assignedUserIds es un array
-  const assignedUsers = Array.isArray(users) && Array.isArray(task.assignedUserIds) 
+  const assignedUsers = Array.isArray(users) && Array.isArray(task.assignedUserIds)
     ? users.filter(user => task.assignedUserIds.includes(user.id))
     : [];
-  
+
   // Log para depuración
   useEffect(() => {
     console.log("TaskCard - ID de tarea:", task.id);
@@ -123,6 +130,62 @@ export function TaskCard({ task, users }: TaskCardProps) {
     }
   };
 
+  // Iniciar edición
+  const handleEditClick = () => {
+    setEditedTask({
+      title: task.title,
+      description: task.description,
+      status: task.status,
+      priority: task.priority
+    });
+    setIsEditing(true);
+  };
+
+  // Cancelar edición
+  const handleCancelEdit = () => {
+    setIsEditing(false);
+  };
+
+  // Guardar cambios
+  const handleSaveEdit = async () => {
+    setIsUpdating(true);
+
+    try {
+      // Preparar los datos
+      const taskData = {
+        ...editedTask,
+        progress: progress
+      };
+
+      // Enviar al servidor
+      await fetch(`/api/tasks/${task.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(taskData),
+        credentials: 'include'
+      });
+
+      // Invalidar y refrescar la caché
+      await queryClient.invalidateQueries({ queryKey: ["tasks"] });
+
+      toast({
+        title: "Tarea actualizada",
+        description: "Los cambios han sido guardados.",
+      });
+
+      setIsEditing(false);
+    } catch (error) {
+      console.error("Error al guardar la tarea:", error);
+      toast({
+        title: "Error",
+        description: "Hubo un problema al actualizar la tarea.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
   const activeUserId = task.assignedUserIds[0];
 
   return (
@@ -137,7 +200,18 @@ export function TaskCard({ task, users }: TaskCardProps) {
         <CardContent className="p-4">
           <div className="flex justify-between items-start mb-2">
             <div className="flex items-center gap-2">
-              <h3 className="font-semibold">{task.title}</h3>
+              <div className="w-full">
+                {!isEditing ? (
+                  <h3 className="font-semibold">{task.title}</h3>
+                ) : (
+                  <Input
+                    value={editedTask.title}
+                    onChange={(e) => setEditedTask(prev => ({ ...prev, title: e.target.value }))}
+                    className="mb-2"
+                    placeholder="Título de la tarea"
+                  />
+                )}
+              </div>
               <Badge
                 variant="secondary"
                 className={`${getPriorityColor(task.priority)} transition-colors duration-200`}
@@ -146,15 +220,39 @@ export function TaskCard({ task, users }: TaskCardProps) {
               </Badge>
             </div>
             <div className="flex gap-2">
-              <Button
-                variant="ghost"
-                size="sm"
-                className="text-blue-500 hover:text-blue-700 hover:bg-blue-100 transition-all duration-200 transform hover:scale-105"
-                onClick={() => setShowEditDialog(true)}
-                title="Editar tarea"
-              >
-                <Edit className="h-4 w-4" />
-              </Button>
+              {!isEditing ? (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="text-blue-500 hover:text-blue-700 hover:bg-blue-100 transition-all duration-200 transform hover:scale-105"
+                  onClick={handleEditClick}
+                  title="Editar tarea"
+                >
+                  <Edit className="h-4 w-4" />
+                </Button>
+              ) : (
+                <>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="text-green-500 hover:text-green-700 hover:bg-green-100"
+                    onClick={handleSaveEdit}
+                    disabled={isUpdating}
+                    title="Guardar cambios"
+                  >
+                    <Save className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="text-red-500 hover:text-red-700 hover:bg-red-100"
+                    onClick={handleCancelEdit}
+                    title="Cancelar edición"
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                </>
+              )}
               <Button
                 variant="ghost"
                 size="sm"
@@ -167,9 +265,21 @@ export function TaskCard({ task, users }: TaskCardProps) {
           </div>
 
           <div className="space-y-4">
-            <p className="text-sm text-muted-foreground line-clamp-2">
-              {task.description}
-            </p>
+            <div>
+              {!isEditing ? (
+                <p className="text-sm text-muted-foreground line-clamp-2">
+                  {task.description}
+                </p>
+              ) : (
+                <Input
+                  value={editedTask.description}
+                  onChange={(e) => setEditedTask(prev => ({ ...prev, description: e.target.value }))}
+                  className="mb-2"
+                  placeholder="Descripción de la tarea"
+                />
+              )}
+            </div>
+
 
             <div className="space-y-1">
               <div className="flex justify-between items-center text-sm">
@@ -209,15 +319,52 @@ export function TaskCard({ task, users }: TaskCardProps) {
                 )}
               </div>
             )}
+            {!isEditing ? (
+              <div className="flex items-center justify-between">
+                <div className="text-sm text-muted-foreground">
+                  Asignado a: {assignedUsers.map(user => user.name).join(', ')}
+                </div>
+                <div className="text-sm text-muted-foreground">
+                  {format(new Date(task.dueDate), 'MMM d')}
+                </div>
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 gap-2">
+                {/* Status Select */}
+                <Select
+                  value={editedTask.status}
+                  onValueChange={(value) => setEditedTask(prev => ({ ...prev, status: value as TaskStatus }))}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Estado" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {Object.values(TaskStatus).map((status) => (
+                      <SelectItem key={status} value={status}>
+                        {status}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
 
-            <div className="flex items-center justify-between">
-              <div className="text-sm text-muted-foreground">
-                Asignado a: {assignedUsers.map(user => user.name).join(', ')}
+                {/* Priority Select */}
+                <Select
+                  value={editedTask.priority}
+                  onValueChange={(value) => setEditedTask(prev => ({ ...prev, priority: value as TaskPriority }))}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Prioridad" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {Object.values(TaskPriority).map((priority) => (
+                      <SelectItem key={priority} value={priority}>
+                        {priority}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
-              <div className="text-sm text-muted-foreground">
-                {format(new Date(task.dueDate), 'MMM d')}
-              </div>
-            </div>
+            )}
           </div>
         </CardContent>
       </Card>
@@ -258,13 +405,6 @@ export function TaskCard({ task, users }: TaskCardProps) {
           </div>
         )}
       </AnimatePresence>
-
-      <EditTaskDialog
-        task={task}
-        users={users}
-        open={showEditDialog}
-        onOpenChange={setShowEditDialog}
-      />
     </motion.div>
   );
 }
