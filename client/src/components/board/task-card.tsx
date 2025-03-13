@@ -120,10 +120,6 @@ export function TaskCard({ task, users }: TaskCardProps) {
     }
   };
 
-  const handleEditClick = () => {
-    setShowEditDialog(true);
-  };
-
   return (
     <motion.div
       initial={{ opacity: 0, y: 10 }}
@@ -145,7 +141,7 @@ export function TaskCard({ task, users }: TaskCardProps) {
                     variant="ghost"
                     size="icon"
                     className="h-8 w-8"
-                    onClick={handleEditClick}
+                    onClick={() => setShowEditDialog(true)}
                   >
                     <Edit className="h-4 w-4" />
                   </Button>
