@@ -1,4 +1,5 @@
-import { useState, useEffect } from "react";
+
+import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Task, TaskStatus, TaskPriority } from "@shared/schema";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
@@ -18,74 +19,70 @@ interface TaskEditDialogProps {
 }
 
 export function TaskEditDialog({ task, isOpen, onClose }: TaskEditDialogProps) {
-  const [editedTask, setEditedTask] = useState<Task>({ ...task });
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const queryClient = useQueryClient();
   const { toast } = useToast();
-
-  // Reiniciar el formulario cuando se abre
-  useEffect(() => {
-    if (isOpen) {
-      // Convertir la fecha string a objeto Date
-      const dueDate = task.dueDate ? new Date(task.dueDate) : new Date();
-      setEditedTask({ ...task, dueDate });
-    }
-  }, [isOpen, task]);
+  const queryClient = useQueryClient();
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [editedTask, setEditedTask] = useState<Partial<Task>>({
+    title: task.title,
+    description: task.description,
+    status: task.status,
+    priority: task.priority,
+    progress: task.progress,
+    dueDate: task.dueDate ? new Date(task.dueDate) : undefined
+  });
 
   const handleSubmit = async () => {
-    setIsSubmitting(true);
-
     try {
-      // Preparar los datos para la API
-      const dataToUpdate = {
+      setIsSubmitting(true);
+      
+      // Preparar la fecha para el envío
+      let formattedDate = null;
+      if (editedTask.dueDate) {
+        formattedDate = (editedTask.dueDate instanceof Date) 
+          ? editedTask.dueDate.toISOString() 
+          : new Date(editedTask.dueDate).toISOString();
+      }
+      
+      // Datos a enviar
+      const updateData = {
         title: editedTask.title,
         description: editedTask.description,
         status: editedTask.status,
         priority: editedTask.priority,
         progress: editedTask.progress,
+        dueDate: formattedDate
       };
-
-      // Asegurar que la fecha esté en formato ISO para el servidor
-      if (editedTask.dueDate) {
-        const dateObj = typeof editedTask.dueDate === 'string' 
-          ? new Date(editedTask.dueDate) 
-          : editedTask.dueDate;
-
-        if (!isNaN(dateObj.getTime())) {
-          dataToUpdate.dueDate = dateObj.toISOString();
-        }
-      }
-
-      console.log("Enviando datos al servidor:", dataToUpdate);
-
-      // Realizar la petición usando fetch directamente
+      
+      console.log("Datos a actualizar:", updateData);
+      
+      // Hacer la petición directamente con fetch
       const response = await fetch(`/api/tasks/${task.id}`, {
         method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(dataToUpdate),
-        credentials: "include",
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(updateData)
       });
-
+      
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || "Error al actualizar la tarea");
+        throw new Error(`Error HTTP: ${response.status}`);
       }
-
-      // Actualizar la caché de consultas con la clave correcta
-      await queryClient.invalidateQueries({ queryKey: ["/api/tasks"] });
-
+      
+      // Actualizar la caché y mostrar mensaje
+      queryClient.invalidateQueries({ queryKey: ["/api/tasks"] });
       toast({
         title: "Tarea actualizada",
-        description: "La tarea se ha actualizado correctamente.",
+        description: "La tarea se ha actualizado correctamente",
       });
-
+      
+      // Cerrar el diálogo
       onClose();
     } catch (error) {
       console.error("Error al actualizar la tarea:", error);
       toast({
         title: "Error",
-        description: "No se pudo actualizar la tarea.",
-        variant: "destructive",
+        description: "No se pudo actualizar la tarea. Por favor, inténtalo de nuevo.",
+        variant: "destructive"
       });
     } finally {
       setIsSubmitting(false);
@@ -94,11 +91,11 @@ export function TaskEditDialog({ task, isOpen, onClose }: TaskEditDialogProps) {
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[500px]">
+      <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Editar Tarea</DialogTitle>
         </DialogHeader>
-
+        
         <div className="space-y-4 py-4">
           <div className="space-y-2">
             <label className="font-medium">Título</label>
@@ -124,7 +121,7 @@ export function TaskEditDialog({ task, isOpen, onClose }: TaskEditDialogProps) {
               <label className="font-medium">Estado</label>
               <Select
                 value={editedTask.status}
-                onValueChange={(value) => setEditedTask(prev => ({ ...prev, status: value as typeof prev.status }))}
+                onValueChange={(value) => setEditedTask(prev => ({ ...prev, status: value as TaskStatus }))}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Seleccionar estado" />
@@ -138,12 +135,12 @@ export function TaskEditDialog({ task, isOpen, onClose }: TaskEditDialogProps) {
                 </SelectContent>
               </Select>
             </div>
-
+            
             <div className="space-y-2">
               <label className="font-medium">Prioridad</label>
               <Select
                 value={editedTask.priority}
-                onValueChange={(value) => setEditedTask(prev => ({ ...prev, priority: value as typeof prev.priority }))}
+                onValueChange={(value) => setEditedTask(prev => ({ ...prev, priority: value as TaskPriority }))}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Seleccionar prioridad" />
@@ -162,7 +159,7 @@ export function TaskEditDialog({ task, isOpen, onClose }: TaskEditDialogProps) {
           <div className="space-y-2">
             <label className="font-medium">Progreso: {editedTask.progress}%</label>
             <Slider
-              value={[editedTask.progress]}
+              value={[editedTask.progress || 0]}
               min={0}
               max={100}
               step={5}
@@ -175,8 +172,8 @@ export function TaskEditDialog({ task, isOpen, onClose }: TaskEditDialogProps) {
             <div className="border rounded-md p-3">
               <Calendar
                 mode="single"
-                selected={editedTask.dueDate instanceof Date ? editedTask.dueDate : new Date(editedTask.dueDate)}
-                onSelect={(date) => date && setEditedTask(prev => ({ ...prev, dueDate: date }))}
+                selected={editedTask.dueDate instanceof Date ? editedTask.dueDate : editedTask.dueDate ? new Date(editedTask.dueDate) : undefined}
+                onSelect={(date) => setEditedTask(prev => ({ ...prev, dueDate: date || undefined }))}
                 initialFocus
               />
             </div>
