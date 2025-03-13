@@ -57,8 +57,7 @@ export function EditTaskDialog({ task, users, open, onOpenChange }: EditTaskDial
       });
 
       // Invalidar y refrescar la caché
-      await queryClient.invalidateQueries({ queryKey: ["/api/tasks"] });
-      await queryClient.refetchQueries({ queryKey: ["/api/tasks"] });
+      await queryClient.invalidateQueries({ queryKey: ["tasks"] });
 
       toast({
         title: "¡Éxito!",
