@@ -34,19 +34,29 @@ export function TaskEditDialog({ task, isOpen, onClose }: TaskEditDialogProps) {
     setIsSubmitting(true);
 
     try {
+      // Si la fecha es del día corriente, ajustar para evitar problemas de zona horaria
+      let adjustedDueDate = editedTask.dueDate;
+      if (adjustedDueDate instanceof Date) {
+        // Asegurar que la fecha se mantiene tal como se seleccionó
+        const dueDate = new Date(adjustedDueDate);
+        // Ajustar para compensar la zona horaria
+        dueDate.setDate(dueDate.getDate());
+        adjustedDueDate = dueDate;
+      }
+
       // Preparar los datos a enviar
       const updatedTaskData = {
         title: editedTask.title,
         description: editedTask.description,
         status: editedTask.status,
         priority: editedTask.priority,
-        dueDate: editedTask.dueDate instanceof Date 
-          ? editedTask.dueDate.toISOString() 
-          : editedTask.dueDate,
-        progress: editedTask.progress // Include progress
+        dueDate: adjustedDueDate instanceof Date 
+          ? adjustedDueDate.toISOString() 
+          : adjustedDueDate,
+        progress: typeof editedTask.progress === 'number' ? editedTask.progress : 0 // Asegurar valor numérico
       };
 
-      console.log("Datos a actualizar:", updatedTaskData);
+      console.log("Datos enviados al servidor:", updatedTaskData);
 
       // Realizar la petición
       const response = await fetch(`/api/tasks/${task.id}`, {
@@ -146,14 +156,23 @@ export function TaskEditDialog({ task, isOpen, onClose }: TaskEditDialogProps) {
           </div>
 
           <div className="space-y-2">
-            <label className="font-medium">Progreso</label>
+            <label className="font-medium">Progreso ({editedTask.progress || 0}%)</label>
             <Slider
-              value={[editedTask.progress || 0]} // Handle potential undefined progress
+              value={[editedTask.progress || 0]} 
               min={0}
               max={100}
               step={5}
-              onValueChange={(value) => setEditedTask(prev => ({ ...prev, progress: value[0] }))}
+              onValueChange={(value) => {
+                console.log("Nuevo valor de progreso:", value[0]);
+                setEditedTask(prev => ({ ...prev, progress: value[0] }));
+              }}
+              className="py-2"
             />
+            <div className="flex justify-between text-xs text-gray-500 mt-1">
+              <span>0%</span>
+              <span>50%</span>
+              <span>100%</span>
+            </div>
           </div>
 
           <div className="space-y-2">
@@ -162,10 +181,24 @@ export function TaskEditDialog({ task, isOpen, onClose }: TaskEditDialogProps) {
               <Calendar
                 mode="single"
                 selected={editedTask.dueDate}
-                onSelect={(date) => date && setEditedTask(prev => ({ ...prev, dueDate: date }))}
+                onSelect={(date) => {
+                  if (date) {
+                    // Crear una nueva instancia para evitar problemas de referencia
+                    const selectedDate = new Date(date);
+                    console.log("Fecha seleccionada:", selectedDate.toISOString());
+                    setEditedTask(prev => ({ ...prev, dueDate: selectedDate }));
+                  }
+                }}
                 initialFocus
+                disabled={(date) => date < new Date(new Date().setHours(0, 0, 0, 0))}
+                showOutsideDays={false}
               />
             </div>
+            {editedTask.dueDate && (
+              <div className="text-sm text-gray-500 mt-1">
+                Fecha seleccionada: {editedTask.dueDate.toLocaleDateString()}
+              </div>
+            )}
           </div>
         </div>
 

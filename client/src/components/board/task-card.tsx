@@ -162,17 +162,19 @@ export function TaskCard({ task, users }: TaskCardProps) {
           
           {/* Acciones */}
           <div className="flex justify-between mt-4">
-            <div className="flex space-x-2">
-              <Button
-                size="sm"
-                variant="outline"
-                className="flex items-center"
-                onClick={() => setShowPomodoro(!showPomodoro)}
-              >
-                <Timer className="h-4 w-4 mr-1" />
-                <span className="text-xs">Pomodoro</span>
-              </Button>
-            </div>
+            {task.status === TaskStatus.IN_PROGRESS && (
+              <div className="flex space-x-2">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="flex items-center"
+                  onClick={() => setShowPomodoro(!showPomodoro)}
+                >
+                  <Timer className="h-4 w-4 mr-1" />
+                  <span className="text-xs">Pomodoro</span>
+                </Button>
+              </div>
+            )}
             <div className="flex space-x-2">
               <Button
                 size="sm"
