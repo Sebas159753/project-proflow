@@ -1,29 +1,15 @@
-
-import React, { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Task, TaskStatus, TaskPriority } from "@shared/schema";
-import { useToast } from "@/hooks/use-toast";
-import { cn } from "@/lib/utils";
-
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Slider } from "@/components/ui/slider";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Save, Loader2 } from "lucide-react";
+import { Calendar } from "@/components/ui/calendar";
+import { useToast } from "@/hooks/use-toast";
+import { format } from "date-fns";
 
 interface TaskEditDialogProps {
   task: Task;
@@ -32,48 +18,47 @@ interface TaskEditDialogProps {
 }
 
 export function TaskEditDialog({ task, isOpen, onClose }: TaskEditDialogProps) {
-  const [formData, setFormData] = useState({
-    title: task.title,
-    description: task.description || "",
-    status: task.status,
-    priority: task.priority,
-    progress: task.progress,
-    dueDate: task.dueDate ? new Date(task.dueDate).toISOString().split("T")[0] : "",
-  });
-
+  const [editedTask, setEditedTask] = useState<Task>({ ...task });
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { toast } = useToast();
 
-  const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
-  ) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
-  };
+  // Reiniciar el formulario cuando se abre
+  useEffect(() => {
+    if (isOpen) {
+      // Convertir la fecha string a objeto Date
+      const dueDate = task.dueDate ? new Date(task.dueDate) : new Date();
+      setEditedTask({ ...task, dueDate });
+    }
+  }, [isOpen, task]);
 
-  const handleSelectChange = (name: string, value: string) => {
-    setFormData((prev) => ({ ...prev, [name]: value }));
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = async () => {
     setIsSubmitting(true);
 
     try {
-      // Preparar datos
+      // Preparar los datos para la API
       const dataToUpdate = {
-        title: formData.title,
-        description: formData.description,
-        status: formData.status,
-        priority: formData.priority,
-        progress: parseInt(formData.progress.toString()),
-        dueDate: formData.dueDate ? new Date(formData.dueDate).toISOString() : null,
+        title: editedTask.title,
+        description: editedTask.description,
+        status: editedTask.status,
+        priority: editedTask.priority,
+        progress: editedTask.progress,
       };
 
-      console.log("Datos a actualizar:", dataToUpdate);
+      // Asegurar que la fecha esté en formato ISO para el servidor
+      if (editedTask.dueDate) {
+        const dateObj = typeof editedTask.dueDate === 'string' 
+          ? new Date(editedTask.dueDate) 
+          : editedTask.dueDate;
 
-      // Realizar la actualización
+        if (!isNaN(dateObj.getTime())) {
+          dataToUpdate.dueDate = dateObj.toISOString();
+        }
+      }
+
+      console.log("Enviando datos al servidor:", dataToUpdate);
+
+      // Realizar la petición usando fetch directamente
       const response = await fetch(`/api/tasks/${task.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
@@ -82,15 +67,18 @@ export function TaskEditDialog({ task, isOpen, onClose }: TaskEditDialogProps) {
       });
 
       if (!response.ok) {
-        throw new Error("Error al actualizar la tarea");
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Error al actualizar la tarea");
       }
 
-      // Actualizar caché y cerrar
-      await queryClient.invalidateQueries({ queryKey: ["tasks"] });
+      // Actualizar la caché de consultas con la clave correcta
+      await queryClient.invalidateQueries({ queryKey: ["/api/tasks"] });
+
       toast({
         title: "Tarea actualizada",
         description: "La tarea se ha actualizado correctamente.",
       });
+
       onClose();
     } catch (error) {
       console.error("Error al actualizar la tarea:", error);
@@ -111,30 +99,21 @@ export function TaskEditDialog({ task, isOpen, onClose }: TaskEditDialogProps) {
           <DialogTitle>Editar Tarea</DialogTitle>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-4 py-2">
+        <div className="space-y-4 py-4">
           <div className="space-y-2">
-            <label htmlFor="title" className="text-sm font-medium">
-              Título
-            </label>
+            <label className="font-medium">Título</label>
             <Input
-              id="title"
-              name="title"
-              value={formData.title}
-              onChange={handleChange}
+              value={editedTask.title}
+              onChange={(e) => setEditedTask(prev => ({ ...prev, title: e.target.value }))}
               placeholder="Título de la tarea"
-              required
             />
           </div>
 
           <div className="space-y-2">
-            <label htmlFor="description" className="text-sm font-medium">
-              Descripción
-            </label>
+            <label className="font-medium">Descripción</label>
             <Textarea
-              id="description"
-              name="description"
-              value={formData.description}
-              onChange={handleChange}
+              value={editedTask.description}
+              onChange={(e) => setEditedTask(prev => ({ ...prev, description: e.target.value }))}
               placeholder="Descripción de la tarea"
               rows={3}
             />
@@ -142,12 +121,10 @@ export function TaskEditDialog({ task, isOpen, onClose }: TaskEditDialogProps) {
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <label htmlFor="status" className="text-sm font-medium">
-                Estado
-              </label>
+              <label className="font-medium">Estado</label>
               <Select
-                value={formData.status}
-                onValueChange={(value) => handleSelectChange("status", value)}
+                value={editedTask.status}
+                onValueChange={(value) => setEditedTask(prev => ({ ...prev, status: value as typeof prev.status }))}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Seleccionar estado" />
@@ -163,12 +140,10 @@ export function TaskEditDialog({ task, isOpen, onClose }: TaskEditDialogProps) {
             </div>
 
             <div className="space-y-2">
-              <label htmlFor="priority" className="text-sm font-medium">
-                Prioridad
-              </label>
+              <label className="font-medium">Prioridad</label>
               <Select
-                value={formData.priority}
-                onValueChange={(value) => handleSelectChange("priority", value)}
+                value={editedTask.priority}
+                onValueChange={(value) => setEditedTask(prev => ({ ...prev, priority: value as typeof prev.priority }))}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Seleccionar prioridad" />
@@ -185,63 +160,41 @@ export function TaskEditDialog({ task, isOpen, onClose }: TaskEditDialogProps) {
           </div>
 
           <div className="space-y-2">
-            <label htmlFor="progress" className="text-sm font-medium">
-              Progreso: {formData.progress}%
-            </label>
+            <label className="font-medium">Progreso: {editedTask.progress}%</label>
             <Slider
-              id="progress"
+              value={[editedTask.progress]}
               min={0}
               max={100}
-              step={10}
-              value={[formData.progress]}
-              onValueChange={(value) => handleSelectChange("progress", value[0].toString())}
-              className="py-4"
+              step={5}
+              onValueChange={(value) => setEditedTask(prev => ({ ...prev, progress: value[0] }))}
             />
           </div>
 
           <div className="space-y-2">
-            <label htmlFor="dueDate" className="text-sm font-medium">
-              Fecha límite
-            </label>
-            <Input
-              id="dueDate"
-              name="dueDate"
-              type="date"
-              value={formData.dueDate}
-              onChange={handleChange}
-            />
+            <label className="font-medium">Fecha de vencimiento</label>
+            <div className="border rounded-md p-3">
+              <Calendar
+                mode="single"
+                selected={editedTask.dueDate instanceof Date ? editedTask.dueDate : new Date(editedTask.dueDate)}
+                onSelect={(date) => date && setEditedTask(prev => ({ ...prev, dueDate: date }))}
+                initialFocus
+              />
+            </div>
           </div>
+        </div>
 
-          <DialogFooter className="pt-4">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={onClose}
-              className="mr-2"
-            >
-              Cancelar
-            </Button>
-            <Button
-              type="submit"
-              disabled={isSubmitting}
-              className={cn(
-                "bg-primary text-primary-foreground hover:bg-primary/90",
-              )}
-            >
-              {isSubmitting ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Guardando...
-                </>
-              ) : (
-                <>
-                  <Save className="mr-2 h-4 w-4" />
-                  Guardar cambios
-                </>
-              )}
-            </Button>
-          </DialogFooter>
-        </form>
+        <DialogFooter>
+          <Button variant="outline" onClick={onClose} disabled={isSubmitting}>
+            Cancelar
+          </Button>
+          <Button 
+            onClick={handleSubmit} 
+            disabled={isSubmitting}
+            className="bg-green-600 hover:bg-green-700 text-white"
+          >
+            {isSubmitting ? "Guardando..." : "Guardar Cambios"}
+          </Button>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );
