@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Task, TaskPriority, TaskStatus } from "@shared/schema";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -94,14 +94,14 @@ export function TaskEditDialog({ task, isOpen, onClose }: TaskEditDialogProps) {
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[500px]">
+      <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Editar Tarea</DialogTitle>
         </DialogHeader>
 
-        <div className="grid gap-4 py-4">
-          <div className="space-y-2">
-            <label className="font-medium">Título</label>
+        <div className="grid gap-3 py-3">
+          <div className="space-y-1">
+            <label className="text-sm font-medium">Título</label>
             <Input
               value={editedTask.title || ""} // Handle potential undefined values
               onChange={(e) => setEditedTask(prev => ({ ...prev, title: e.target.value }))}
@@ -109,8 +109,8 @@ export function TaskEditDialog({ task, isOpen, onClose }: TaskEditDialogProps) {
             />
           </div>
 
-          <div className="space-y-2">
-            <label className="font-medium">Descripción</label>
+          <div className="space-y-1">
+            <label className="text-sm font-medium">Descripción</label>
             <Textarea
               value={editedTask.description || ""} // Handle potential undefined values
               onChange={(e) => setEditedTask(prev => ({ ...prev, description: e.target.value }))}
@@ -119,8 +119,8 @@ export function TaskEditDialog({ task, isOpen, onClose }: TaskEditDialogProps) {
             />
           </div>
 
-          <div className="space-y-2">
-            <label className="font-medium">Prioridad</label>
+          <div className="space-y-1">
+            <label className="text-sm font-medium">Prioridad</label>
             <Select
               value={editedTask.priority}
               onValueChange={(value) => setEditedTask(prev => ({ ...prev, priority: value }))}
@@ -137,8 +137,8 @@ export function TaskEditDialog({ task, isOpen, onClose }: TaskEditDialogProps) {
             </Select>
           </div>
 
-          <div className="space-y-2">
-            <label className="font-medium">Estado</label>
+          <div className="space-y-1">
+            <label className="text-sm font-medium">Estado</label>
             <Select
               value={editedTask.status}
               onValueChange={(value) => setEditedTask(prev => ({ ...prev, status: value }))}
@@ -155,8 +155,8 @@ export function TaskEditDialog({ task, isOpen, onClose }: TaskEditDialogProps) {
             </Select>
           </div>
 
-          <div className="space-y-2">
-            <label className="font-medium">Progreso ({editedTask.progress || 0}%)</label>
+          <div className="space-y-1">
+            <label className="text-sm font-medium">Progreso ({editedTask.progress || 0}%)</label>
             <Slider
               value={[editedTask.progress || 0]} 
               min={0}
@@ -175,8 +175,8 @@ export function TaskEditDialog({ task, isOpen, onClose }: TaskEditDialogProps) {
             </div>
           </div>
 
-          <div className="space-y-2">
-            <label className="font-medium">Fecha de vencimiento</label>
+          <div className="space-y-1">
+            <label className="text-sm font-medium">Fecha de vencimiento</label>
             <div className="border rounded-md p-3">
               <Calendar
                 mode="single"
@@ -202,16 +202,22 @@ export function TaskEditDialog({ task, isOpen, onClose }: TaskEditDialogProps) {
           </div>
         </div>
 
-        <DialogFooter>
-          <Button variant="outline" onClick={onClose} disabled={isSubmitting}>
-            Cancelar
-          </Button>
+        <DialogFooter className="mt-4 mb-1">
+          <DialogClose asChild>
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={isSubmitting}
+            >
+              Cancelar
+            </Button>
+          </DialogClose>
           <Button 
             onClick={handleSubmit} 
             disabled={isSubmitting}
-            className="bg-green-600 hover:bg-green-700 text-white"
+            size="sm"
           >
-            {isSubmitting ? "Guardando..." : "Guardar Cambios"}
+            {isSubmitting ? "Guardando..." : "Guardar cambios"}
           </Button>
         </DialogFooter>
       </DialogContent>
