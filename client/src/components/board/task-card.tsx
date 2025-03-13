@@ -12,6 +12,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
 import { motion, AnimatePresence } from "framer-motion";
 import { Slider } from "@/components/ui/slider";
+import { EditTaskDialog } from "../dialogs/edit-task-dialog";
 import { usePoints } from "@/hooks/use-points";
 import { cn } from "@/lib/utils";
 
@@ -41,6 +42,7 @@ export function TaskCard({ task, users }: TaskCardProps) {
   const [showPomodoro, setShowPomodoro] = useState(false);
   const [progress, setProgress] = useState(task.progress);
   const [isUpdating, setIsUpdating] = useState(false);
+  const [showEditDialog, setShowEditDialog] = useState(false);
   const [showCelebration, setShowCelebration] = useState(false);
   const queryClient = useQueryClient();
   const { toast } = useToast();
@@ -147,6 +149,15 @@ export function TaskCard({ task, users }: TaskCardProps) {
               <Button
                 variant="ghost"
                 size="sm"
+                className="text-blue-500 hover:text-blue-700 hover:bg-blue-100 transition-all duration-200 transform hover:scale-105"
+                onClick={() => setShowEditDialog(true)}
+                title="Editar tarea"
+              >
+                <Edit className="h-4 w-4" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
                 className="text-red-500 hover:text-red-700 hover:bg-red-100 transition-colors duration-200"
                 onClick={handleDeleteTask}
               >
@@ -247,6 +258,13 @@ export function TaskCard({ task, users }: TaskCardProps) {
           </div>
         )}
       </AnimatePresence>
+
+      <EditTaskDialog
+        task={task}
+        users={users}
+        open={showEditDialog}
+        onOpenChange={setShowEditDialog}
+      />
     </motion.div>
   );
 }
