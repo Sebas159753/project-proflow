@@ -39,16 +39,13 @@ const getPriorityColor = (priority: string) => {
 
 export function TaskCard({ task, users }: TaskCardProps) {
   const [showTimer, setShowTimer] = useState(false);
-  const [isEditing, setIsEditing] = useState(false);
-  const [isUpdating, setIsUpdating] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [showEditDialog, setShowEditDialog] = useState(false);
+
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { addPointsForTaskCompletion } = usePoints();
 
-  const [editedTask, setEditedTask] = useState<Task>({
-    ...task,
-  });
 
   // Usuarios asignados a la tarea actual
   const assignedUsers = users.filter((user) =>
@@ -62,84 +59,6 @@ export function TaskCard({ task, users }: TaskCardProps) {
 
   const handleTimerClick = () => {
     setShowTimer(!showTimer);
-  };
-
-  const handleEditClick = () => {
-    setIsEditing(true);
-    setEditedTask({ ...task });
-  };
-
-  const handleCancelEdit = () => {
-    setIsEditing(false);
-  };
-
-  const handleSaveEdit = async () => {
-    try {
-      setIsUpdating(true);
-
-      // Preparar objetos de fecha - Manejo explícito de fechas
-      let dueDateIso = null;
-
-      if (editedTask.dueDate) {
-        // Si es una cadena, convertirla a objeto Date
-        const dateObj = typeof editedTask.dueDate === 'string'
-          ? new Date(editedTask.dueDate)
-          : editedTask.dueDate;
-
-        // Asegurarse de que sea una fecha válida
-        if (!isNaN(dateObj.getTime())) {
-          dueDateIso = dateObj.toISOString();
-        }
-      }
-
-      // Objeto de actualización simplificado
-      const dataToUpdate = {
-        title: editedTask.title || task.title,
-        description: editedTask.description || task.description,
-        progress: editedTask.progress || task.progress,
-        status: editedTask.status || task.status,
-        priority: editedTask.priority || task.priority,
-        dueDate: dueDateIso
-      };
-
-      console.log("Datos a enviar:", dataToUpdate);
-
-      // Usar fetch directamente para tener más control
-      const response = await fetch(`/api/tasks/${task.id}`, {
-        method: "PATCH",
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(dataToUpdate),
-        credentials: 'include'
-      });
-
-      if (!response.ok) {
-        throw new Error(`Error HTTP: ${response.status}`);
-      }
-
-      // Actualizar la caché de consultas
-      queryClient.invalidateQueries({ queryKey: ["/api/tasks"] });
-
-      // Mostrar notificación de éxito
-      toast({
-        title: "¡Tarea actualizada!",
-        description: "La tarea se ha actualizado correctamente.",
-        className: "bg-green-500 text-white",
-      });
-
-      // Salir del modo de edición
-      setIsEditing(false);
-    } catch (error) {
-      console.error("Error al actualizar la tarea:", error);
-      toast({
-        title: "Error",
-        description: "Hubo un problema al actualizar la tarea.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsUpdating(false);
-    }
   };
 
   const handleDeleteClick = async () => {
@@ -208,94 +127,6 @@ export function TaskCard({ task, users }: TaskCardProps) {
     >
       <Card className="overflow-hidden">
         <CardContent className="p-4">
-          {isEditing ? (
-            // Modo de edición
-            <div>
-              <div className="mb-4">
-                <label className="text-sm text-muted-foreground mb-1 block">Título</label>
-                <Input
-                  value={editedTask.title}
-                  onChange={(e) => setEditedTask({ ...editedTask, title: e.target.value })}
-                  className="mb-2"
-                  maxLength={50}
-                />
-                <label className="text-sm text-muted-foreground mb-1 block">Descripción</label>
-                <Input
-                  value={editedTask.description || ""}
-                  onChange={(e) => setEditedTask({ ...editedTask, description: e.target.value })}
-                  className="mb-2"
-                  maxLength={100}
-                />
-              </div>
-
-              {/* Due Date field */}
-              <div className="mb-2">
-                <label className="text-sm text-muted-foreground mb-1 block">Fecha de vencimiento</label>
-                <Input
-                  type="date"
-                  value={
-                    editedTask.dueDate
-                      ? new Date(editedTask.dueDate).toISOString().split("T")[0]
-                      : ""
-                  }
-                  onChange={(e) => {
-                    const date = e.target.value ? new Date(e.target.value) : null;
-                    setEditedTask({ ...editedTask, dueDate: date });
-                  }}
-                />
-              </div>
-
-              {/* Progress Slider */}
-              <div className="space-y-2 mb-4">
-                <div className="flex justify-between items-center">
-                  <label className="text-sm text-muted-foreground">Progreso: {editedTask.progress}%</label>
-                </div>
-                <Slider
-                  value={[editedTask.progress]}
-                  min={0}
-                  max={100}
-                  step={5}
-                  onValueChange={(value) => setEditedTask({ ...editedTask, progress: value[0] })}
-                />
-              </div>
-
-              {/* Edit buttons - Rediseñados para mayor visibilidad */}
-              <div className="flex justify-end gap-3 mt-4">
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => setIsEditing(false)}
-                  disabled={isUpdating}
-                  className="border-gray-300 hover:bg-gray-100"
-                >
-                  <X className="w-4 h-4 mr-1" />
-                  Cancelar
-                </Button>
-                <Button
-                  size="sm"
-                  onClick={handleSaveEdit}
-                  disabled={isUpdating}
-                  className={cn(
-                    "bg-green-600 hover:bg-green-700 text-white font-medium px-4 py-2",
-                    isUpdating && "opacity-50 cursor-not-allowed"
-                  )}
-                >
-                  {isUpdating ? (
-                    <div className="flex items-center">
-                      <div className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full mr-2"></div>
-                      Guardando...
-                    </div>
-                  ) : (
-                    <div className="flex items-center">
-                      <Save className="w-4 h-4 mr-2" />
-                      Guardar Cambios
-                    </div>
-                  )}
-                </Button>
-              </div>
-            </div>
-          ) : (
-            // Modo de visualización
             <div>
               <div className="flex justify-between items-start mb-2">
                 <div className="flex-1">
@@ -309,7 +140,7 @@ export function TaskCard({ task, users }: TaskCardProps) {
                     variant="ghost"
                     size="icon"
                     className="h-8 w-8"
-                    onClick={handleEditClick}
+                    onClick={() => setShowEditDialog(true)}
                   >
                     <Edit className="h-4 w-4" />
                   </Button>
@@ -386,7 +217,15 @@ export function TaskCard({ task, users }: TaskCardProps) {
                 </div>
               )}
             </div>
-          )}
+
+            {/* Diálogo para editar la tarea */}
+            {showEditDialog && (
+              <TaskEditDialog 
+                task={task} 
+                isOpen={showEditDialog} 
+                onClose={() => setShowEditDialog(false)} 
+              />
+            )}
         </CardContent>
       </Card>
     </motion.div>
