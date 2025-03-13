@@ -1,16 +1,17 @@
+
 import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { format } from "date-fns";
 import { TaskStatus, type Task, type User, TaskPriority } from "@shared/schema";
 import { PomodoroTimer } from "../pomodoro/pomodoro-timer";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Timer, Trash2, Edit, Save, X } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import { Slider } from "@/components/ui/slider";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -37,159 +38,86 @@ const getPriorityColor = (priority: string) => {
   }
 };
 
-const EMOJIS = ["🎉", "🎊", "✨", "🌟", "💫", "🎯"];
-
 export function TaskCard({ task, users }: TaskCardProps) {
-  const [showPomodoro, setShowPomodoro] = useState(false);
-  const [progress, setProgress] = useState(task.progress);
-  const [isUpdating, setIsUpdating] = useState(false);
-  const [showCelebration, setShowCelebration] = useState(false);
+  const [showTimer, setShowTimer] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
-  const [editedTask, setEditedTask] = useState({
-    title: task.title,
-    description: task.description,
-    status: task.status,
-    priority: task.priority,
-    dueDate: task.dueDate, // Initialize with existing due date
-  });
-  const queryClient = useQueryClient();
+  const [isUpdating, setIsUpdating] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   const { toast } = useToast();
-  const { awardPoints } = usePoints();
+  const queryClient = useQueryClient();
+  const { addPointsForTaskCompletion } = usePoints();
+  
+  const [editedTask, setEditedTask] = useState<Task>({
+    ...task,
+  });
 
-  useEffect(() => {
-    if (progress === 100 && !showCelebration) {
-      setShowCelebration(true);
-      setTimeout(() => setShowCelebration(false), 3000); // Hide after 3 seconds
-    }
-  }, [progress]);
+  // Usuarios asignados a la tarea actual
+  const assignedUsers = users.filter((user) => 
+    task.assignedUserIds.includes(user.id)
+  );
 
-  // Asegurarnos de que task.assignedUserIds es un array
-  const assignedUsers = Array.isArray(users) && Array.isArray(task.assignedUserIds)
-    ? users.filter(user => task.assignedUserIds.includes(user.id))
-    : [];
+  console.log("TaskCard - ID de tarea:", task.id);
+  console.log("TaskCard - IDs de usuarios asignados:", task.assignedUserIds);
+  console.log("TaskCard - Usuarios disponibles:", users);
+  console.log("TaskCard - Usuarios asignados filtrados:", assignedUsers);
 
-  // Log para depuración
-  useEffect(() => {
-    console.log("TaskCard - ID de tarea:", task.id);
-    console.log("TaskCard - Usuarios disponibles:", users);
-    console.log("TaskCard - IDs de usuarios asignados:", task.assignedUserIds);
-    console.log("TaskCard - Usuarios asignados filtrados:", assignedUsers);
-  }, [task, users]);
+  // Formatear la fecha de vencimiento
+  const formattedDueDate = task.dueDate 
+    ? format(new Date(task.dueDate), "dd/MM/yyyy")
+    : "Sin fecha";
 
-  const handleProgressChange = async (value: number[]) => {
-    const progressValue = value[0];
-    if (progressValue === progress) return;
-
-    setProgress(progressValue);
-    setIsUpdating(true);
-
-    try {
-      await fetch(`/api/tasks/${task.id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          progress: progressValue,
-          status: progressValue === 100 ? TaskStatus.COMPLETED : task.status
-        }),
-        credentials: 'include'
-      });
-
-      // Si la tarea se completó, otorgar puntos al usuario asignado
-      if (progressValue === 100 && task.status !== TaskStatus.COMPLETED) {
-        awardPoints(10, 'Tarea completada');
-      }
-
-      await queryClient.invalidateQueries({ queryKey: ["tasks"] });
-    } catch (error) {
-      console.error("Error al actualizar el progreso:", error);
-      toast({
-        title: "Error",
-        description: "No se pudo actualizar el progreso de la tarea",
-        variant: "destructive"
-      });
-    } finally {
-      setIsUpdating(false);
-    }
-  };
-
-  const handleDeleteTask = async () => {
-    try {
-      await apiRequest('DELETE', `/api/tasks/${task.id}`);
-      await queryClient.invalidateQueries({ queryKey: ["tasks"] });
-
-      toast({
-        title: "Tarea eliminada",
-        description: "La tarea ha sido eliminada correctamente",
-      });
-    } catch (error) {
-      console.error("Error al eliminar la tarea:", error);
-      toast({
-        title: "Error",
-        description: "No se pudo eliminar la tarea",
-        variant: "destructive"
-      });
-    }
-  };
-
-  // Iniciar edición
   const handleEditClick = () => {
-    setEditedTask({
-      title: task.title,
-      description: task.description,
-      status: task.status,
-      priority: task.priority,
-      dueDate: task.dueDate // Include due date in editedTask
-    });
     setIsEditing(true);
+    setEditedTask({...task});
   };
 
-  // Cancelar edición
   const handleCancelEdit = () => {
     setIsEditing(false);
   };
 
-  // Guardar cambios
   const handleSaveEdit = async () => {
     setIsUpdating(true);
 
     try {
-      // Preparar los datos para enviar
-      const updatedTask = {
+      // Crear objeto solo con los campos que queremos actualizar
+      const updatedTaskData = {
         title: editedTask.title,
         description: editedTask.description,
         status: editedTask.status,
         priority: editedTask.priority,
-        dueDate: editedTask.dueDate 
-          ? (editedTask.dueDate instanceof Date 
-              ? editedTask.dueDate.toISOString() 
-              : new Date(editedTask.dueDate).toISOString())
-          : task.dueDate
+        progress: editedTask.progress,
+        dueDate: editedTask.dueDate instanceof Date 
+          ? editedTask.dueDate.toISOString() 
+          : typeof editedTask.dueDate === 'string'
+            ? new Date(editedTask.dueDate).toISOString()
+            : null
       };
 
-      console.log("Enviando actualización de tarea:", updatedTask);
-
-      // Enviar solo los campos necesarios
-      await fetch(`/api/tasks/${task.id}`, {
+      console.log("Enviando actualización de tarea:", updatedTaskData);
+      
+      // Enviar la solicitud de actualización
+      await apiRequest(`/api/tasks/${task.id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(updatedTask),
-        credentials: 'include'
+        body: JSON.stringify(updatedTaskData),
       });
 
-      // Invalidar y refrescar la caché
-      await queryClient.invalidateQueries({ queryKey: ["tasks"] });
-
+      // Mostrar notificación de éxito
       toast({
         title: "Tarea actualizada",
-        description: "Los cambios han sido guardados.",
+        description: "La tarea se ha actualizado con éxito",
       });
 
+      // Actualizar la cache de consultas
+      queryClient.invalidateQueries(['tasks']);
+      
+      // Salir del modo de edición
       setIsEditing(false);
     } catch (error) {
-      console.error("Error al guardar la tarea:", error);
+      console.error("Error al actualizar la tarea:", error);
       toast({
         title: "Error",
-        description: "Hubo un problema al actualizar la tarea.",
+        description: "No se pudo actualizar la tarea",
         variant: "destructive",
       });
     } finally {
@@ -197,241 +125,291 @@ export function TaskCard({ task, users }: TaskCardProps) {
     }
   };
 
-  const activeUserId = task.assignedUserIds[0];
+  const handleDelete = async () => {
+    if (isDeleting) return;
+    setIsDeleting(true);
+
+    try {
+      await apiRequest(`/api/tasks/${task.id}`, {
+        method: 'DELETE',
+      });
+
+      queryClient.invalidateQueries(['tasks']);
+      toast({
+        title: "Tarea eliminada",
+        description: "La tarea se ha eliminado con éxito",
+      });
+    } catch (error) {
+      console.error("Error al eliminar la tarea:", error);
+      toast({
+        title: "Error",
+        description: "No se pudo eliminar la tarea",
+        variant: "destructive",
+      });
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  const handleStatusChange = async (newStatus: string) => {
+    if (newStatus === TaskStatus.COMPLETED && task.status !== TaskStatus.COMPLETED) {
+      addPointsForTaskCompletion(1, task.priority);
+    }
+
+    try {
+      await apiRequest(`/api/tasks/${task.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: newStatus }),
+      });
+
+      queryClient.invalidateQueries(['tasks']);
+      toast({
+        title: "Estado actualizado",
+        description: `Tarea movida a "${newStatus}"`,
+      });
+    } catch (error) {
+      console.error("Error al actualizar el estado:", error);
+      toast({
+        title: "Error",
+        description: "No se pudo actualizar el estado",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleProgressChange = async (newProgress: number[]) => {
+    const progress = newProgress[0];
+    
+    try {
+      await apiRequest(`/api/tasks/${task.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ progress }),
+      });
+
+      queryClient.invalidateQueries(['tasks']);
+    } catch (error) {
+      console.error("Error al actualizar el progreso:", error);
+      toast({
+        title: "Error",
+        description: "No se pudo actualizar el progreso",
+        variant: "destructive",
+      });
+    }
+  };
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -20 }}
-      whileHover={{ scale: 1.02 }}
-      transition={{ duration: 0.2 }}
-    >
-      <Card className="transform transition-all duration-200 hover:shadow-lg">
-        <CardContent className="p-4">
-          <div className="flex justify-between items-start mb-2">
-            <div className="flex items-center gap-2">
-              <div className="w-full">
-                {!isEditing ? (
-                  <h3 className="font-semibold">{task.title}</h3>
-                ) : (
-                  <Input
-                    value={editedTask.title}
-                    onChange={(e) => setEditedTask(prev => ({ ...prev, title: e.target.value }))}
-                    className="mb-2"
-                    placeholder="Título de la tarea"
-                  />
-                )}
-              </div>
-              <Badge
-                variant="secondary"
-                className={`${getPriorityColor(task.priority)} transition-colors duration-200`}
-              >
-                {task.priority}
-              </Badge>
+    <Card className="shadow-md hover:shadow-lg transition-shadow duration-300">
+      <CardContent className="p-4">
+        {isEditing ? (
+          // Modo de edición
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <label className="text-sm text-muted-foreground">Título</label>
+              <Input
+                value={editedTask.title}
+                onChange={(e) => setEditedTask({ ...editedTask, title: e.target.value })}
+                placeholder="Título de la tarea"
+              />
             </div>
-            <div className="flex gap-2">
-              {!isEditing ? (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="text-blue-500 hover:text-blue-700 hover:bg-blue-100 transition-all duration-200 transform hover:scale-105"
-                  onClick={handleEditClick}
-                  title="Editar tarea"
-                >
-                  <Edit className="h-4 w-4" />
-                </Button>
-              ) : (
-                <>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="text-green-500 hover:text-green-700 hover:bg-green-100"
-                    onClick={handleSaveEdit}
-                    disabled={isUpdating}
-                    title="Guardar cambios"
-                  >
-                    <Save className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="text-red-500 hover:text-red-700 hover:bg-red-100"
-                    onClick={handleCancelEdit}
-                    title="Cancelar edición"
-                  >
-                    <X className="h-4 w-4" />
-                  </Button>
-                </>
-              )}
-              <Button
-                variant="ghost"
-                size="sm"
-                className="text-red-500 hover:text-red-700 hover:bg-red-100 transition-colors duration-200"
-                onClick={handleDeleteTask}
+            
+            <div className="space-y-2">
+              <label className="text-sm text-muted-foreground">Descripción</label>
+              <Input
+                value={editedTask.description}
+                onChange={(e) => setEditedTask({ ...editedTask, description: e.target.value })}
+                placeholder="Descripción"
+              />
+            </div>
+            
+            <div className="grid grid-cols-2 gap-2 mb-2">
+              {/* Status Select */}
+              <Select
+                value={editedTask.status}
+                onValueChange={(value) => setEditedTask({ ...editedTask, status: value as TaskStatusType })}
               >
-                <Trash2 className="h-4 w-4" />
+                <SelectTrigger>
+                  <SelectValue placeholder="Estado" />
+                </SelectTrigger>
+                <SelectContent>
+                  {Object.values(TaskStatus).map((status) => (
+                    <SelectItem key={status} value={status}>
+                      {status}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              
+              {/* Priority Select */}
+              <Select
+                value={editedTask.priority}
+                onValueChange={(value) => setEditedTask({ ...editedTask, priority: value as TaskPriorityType })}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Prioridad" />
+                </SelectTrigger>
+                <SelectContent>
+                  {Object.values(TaskPriority).map((priority) => (
+                    <SelectItem key={priority} value={priority}>
+                      {priority}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            
+            {/* Due Date field */}
+            <div className="mb-2">
+              <label className="text-sm text-muted-foreground mb-1 block">Fecha de vencimiento</label>
+              <Input
+                type="date"
+                value={
+                  editedTask.dueDate 
+                    ? new Date(editedTask.dueDate).toISOString().split('T')[0]
+                    : ''
+                }
+                onChange={(e) => {
+                  const date = e.target.value ? new Date(e.target.value) : null;
+                  setEditedTask({ 
+                    ...editedTask, 
+                    dueDate: date 
+                  });
+                }}
+                className="w-full"
+              />
+            </div>
+            
+            {/* Progreso */}
+            <div className="space-y-2">
+              <div className="flex justify-between items-center">
+                <label className="text-sm text-muted-foreground">Progreso: {editedTask.progress}%</label>
+              </div>
+              <Slider
+                value={[editedTask.progress]}
+                min={0}
+                max={100}
+                step={5}
+                onValueChange={(value) => setEditedTask({ ...editedTask, progress: value[0] })}
+              />
+            </div>
+            
+            {/* Botones de acción */}
+            <div className="flex justify-end space-x-2 pt-2">
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={handleCancelEdit}
+                disabled={isUpdating}
+              >
+                <X className="h-4 w-4 mr-1" /> Cancelar
+              </Button>
+              <Button 
+                variant="default" 
+                size="sm" 
+                onClick={handleSaveEdit}
+                disabled={isUpdating}
+              >
+                {isUpdating ? "Guardando..." : (
+                  <>
+                    <Save className="h-4 w-4 mr-1" /> Guardar
+                  </>
+                )}
               </Button>
             </div>
           </div>
-
-          <div className="space-y-4">
-            <div>
-              {!isEditing ? (
-                <p className="text-sm text-muted-foreground line-clamp-2">
+        ) : (
+          // Modo de visualización
+          <div>
+            <div className="flex justify-between items-start mb-2">
+              <div className="flex-1">
+                <h3 className="font-semibold truncate">{task.title}</h3>
+                <p className="text-sm text-muted-foreground line-clamp-2 mt-1">
                   {task.description}
                 </p>
-              ) : (
-                <Input
-                  value={editedTask.description}
-                  onChange={(e) => setEditedTask(prev => ({ ...prev, description: e.target.value }))}
-                  className="mb-2"
-                  placeholder="Descripción de la tarea"
-                />
-              )}
-            </div>
-
-
-            <div className="space-y-1">
-              <div className="flex justify-between items-center text-sm">
-                <span>Progreso: {progress}%</span>
               </div>
-              <Slider
-                defaultValue={[progress]}
-                max={100}
-                step={10}
-                onValueChange={handleProgressChange}
-                className={cn(
-                  "cursor-pointer transition-opacity duration-200",
-                  isUpdating ? "opacity-50 pointer-events-none" : ""
-                )}
-                disabled={isUpdating}
-              />
+              <div className="flex space-x-1">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8"
+                  onClick={handleEditClick}
+                >
+                  <Edit className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8 text-destructive hover:text-destructive"
+                  onClick={handleDelete}
+                  disabled={isDeleting}
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </div>
             </div>
 
-            {task.status === TaskStatus.IN_PROGRESS && (
-              <div className="space-y-2">
-                {!showPomodoro ? (
+            <div className="flex flex-wrap gap-2 mb-2">
+              <Badge variant="outline" className={cn(getPriorityColor(task.priority))}>
+                {task.priority}
+              </Badge>
+              <Badge variant="outline" className="bg-slate-100 text-slate-800">
+                {formattedDueDate}
+              </Badge>
+            </div>
+
+            <div className="mb-4">
+              <div className="flex justify-between text-sm text-muted-foreground mb-1">
+                <span>Progreso</span>
+                <span>{task.progress}%</span>
+              </div>
+              <Progress value={task.progress} className="h-2" />
+            </div>
+
+            <div className="flex justify-between items-center">
+              <div className="flex space-x-1">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="text-xs"
+                  onClick={() => setShowTimer(!showTimer)}
+                >
+                  <Timer className="h-3 w-3 mr-1" />
+                  {showTimer ? "Ocultar" : "Pomodoro"}
+                </Button>
+              </div>
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                className="flex space-x-1"
+              >
+                {task.status !== TaskStatus.COMPLETED && (
                   <Button
                     variant="outline"
                     size="sm"
-                    className="w-full transition-colors duration-200"
-                    onClick={() => setShowPomodoro(true)}
+                    className="text-xs bg-green-50 text-green-700 hover:bg-green-100"
+                    onClick={() => handleStatusChange(TaskStatus.COMPLETED)}
                   >
-                    <Timer className="h-4 w-4 mr-2" />
-                    Iniciar Pomodoro
+                    Completar
                   </Button>
-                ) : (
-                  <PomodoroTimer
-                    taskId={task.id}
-                    userId={activeUserId}
-                    onComplete={handleProgressChange}
-                  />
                 )}
-              </div>
-            )}
-            {!isEditing ? (
-              <div className="flex items-center justify-between">
-                <div className="text-sm text-muted-foreground">
-                  Asignado a: {assignedUsers.map(user => user.name).join(', ')}
-                </div>
-                <div className="text-sm text-muted-foreground">
-                  {format(new Date(task.dueDate), 'MMM d')}
-                </div>
-              </div>
-            ) : (
-              <div className="grid grid-cols-2 gap-2 mb-2">
-                {/* Status Select */}
-                <Select
-                  value={editedTask.status}
-                  onValueChange={(value) => setEditedTask(prev => ({ ...prev, status: value as TaskStatus }))}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Estado" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {Object.values(TaskStatus).map((status) => (
-                      <SelectItem key={status} value={status}>
-                        {status}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+              </motion.div>
+            </div>
 
-                {/* Priority Select */}
-                <Select
-                  value={editedTask.priority}
-                  onValueChange={(value) => setEditedTask(prev => ({ ...prev, priority: value as TaskPriority }))}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Prioridad" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {Object.values(TaskPriority).map((priority) => (
-                      <SelectItem key={priority} value={priority}>
-                        {priority}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {/* Due Date field */}
-              <div className="mb-2">
-                <label className="text-sm text-muted-foreground mb-1 block">Fecha de vencimiento</label>
-                <Input
-                  type="date"
-                  value={editedTask.dueDate instanceof Date
-                    ? editedTask.dueDate.toISOString().split('T')[0]
-                    : new Date(editedTask.dueDate).toISOString().split('T')[0]}
-                  onChange={(e) => setEditedTask(prev => ({
-                    ...prev,
-                    dueDate: new Date(e.target.value)
-                  }))}
-                  className="w-full"
+            {showTimer && (
+              <div className="mt-4 border-t pt-4">
+                <PomodoroTimer
+                  taskId={task.id}
+                  pomodoroCount={task.pomodoroCount}
+                  pomodoroDuration={task.pomodoroDuration}
+                  shortBreakDuration={task.shortBreakDuration}
+                  longBreakDuration={task.longBreakDuration}
                 />
               </div>
             )}
           </div>
-        </CardContent>
-      </Card>
-
-      <AnimatePresence>
-        {showCelebration && (
-          <div className="fixed inset-0 pointer-events-none flex items-center justify-center">
-            {EMOJIS.map((emoji, index) => (
-              <motion.div
-                key={index}
-                initial={{
-                  opacity: 0,
-                  scale: 0,
-                  y: 100,
-                  x: Math.random() * 200 - 100
-                }}
-                animate={{
-                  opacity: 1,
-                  scale: [1, 1.5, 1],
-                  y: [-20, -40, -60],
-                  x: [Math.random() * 200 - 100, Math.random() * 300 - 150]
-                }}
-                exit={{
-                  opacity: 0,
-                  scale: 0,
-                  y: -100
-                }}
-                transition={{
-                  duration: 2,
-                  delay: index * 0.2,
-                  ease: "easeOut"
-                }}
-                className="absolute text-4xl"
-              >
-                {emoji}
-              </motion.div>
-            ))}
-          </div>
         )}
-      </AnimatePresence>
-    </motion.div>
+      </CardContent>
+    </Card>
   );
 }
