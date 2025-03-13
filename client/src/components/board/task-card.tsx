@@ -77,36 +77,46 @@ export function TaskCard({ task, users }: TaskCardProps) {
     try {
       setIsUpdating(true);
 
-      // Preparar los datos para enviar al servidor
-      const dataToUpdate = {
-        title: editedTask.title,
-        description: editedTask.description,
-        progress: editedTask.progress,
-        status: editedTask.status,
-        priority: editedTask.priority
-      };
+      // Preparar objetos de fecha - Manejo explícito de fechas
+      let dueDateIso = null;
 
-      // Asegurarse que la fecha se procesa correctamente
-      // Si es string, asegurar que está en formato ISO
       if (editedTask.dueDate) {
-        let formattedDate;
-        if (editedTask.dueDate instanceof Date) {
-          formattedDate = editedTask.dueDate.toISOString();
-        } else if (typeof editedTask.dueDate === 'string') {
-          // Si ya es string, intentar convertirlo a fecha y luego a ISO
-          formattedDate = new Date(editedTask.dueDate).toISOString();
+        // Si es una cadena, convertirla a objeto Date
+        const dateObj = typeof editedTask.dueDate === 'string'
+          ? new Date(editedTask.dueDate)
+          : editedTask.dueDate;
+
+        // Asegurarse de que sea una fecha válida
+        if (!isNaN(dateObj.getTime())) {
+          dueDateIso = dateObj.toISOString();
         }
-        dataToUpdate.dueDate = formattedDate;
       }
 
-      // Mostrar en consola los datos que se envían
-      console.log("Datos enviados al servidor:", dataToUpdate);
+      // Objeto de actualización simplificado
+      const dataToUpdate = {
+        title: editedTask.title || task.title,
+        description: editedTask.description || task.description,
+        progress: editedTask.progress || task.progress,
+        status: editedTask.status || task.status,
+        priority: editedTask.priority || task.priority,
+        dueDate: dueDateIso
+      };
 
-      // Realizar la solicitud API
-      await apiRequest(`/api/tasks/${task.id}`, {
+      console.log("Datos a enviar:", dataToUpdate);
+
+      // Usar fetch directamente para tener más control
+      const response = await fetch(`/api/tasks/${task.id}`, {
         method: "PATCH",
-        data: dataToUpdate,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(dataToUpdate),
+        credentials: 'include'
       });
+
+      if (!response.ok) {
+        throw new Error(`Error HTTP: ${response.status}`);
+      }
 
       // Actualizar la caché de consultas
       queryClient.invalidateQueries({ queryKey: ["/api/tasks"] });
@@ -123,9 +133,9 @@ export function TaskCard({ task, users }: TaskCardProps) {
     } catch (error) {
       console.error("Error al actualizar la tarea:", error);
       toast({
-        variant: "destructive",
         title: "Error",
-        description: "No se pudo actualizar la tarea. Inténtalo de nuevo.",
+        description: "Hubo un problema al actualizar la tarea.",
+        variant: "destructive",
       });
     } finally {
       setIsUpdating(false);
@@ -249,23 +259,38 @@ export function TaskCard({ task, users }: TaskCardProps) {
                 />
               </div>
 
-              {/* Action Buttons */}
-              <div className="flex gap-2 justify-end">
+              {/* Edit buttons - Rediseñados para mayor visibilidad */}
+              <div className="flex justify-end gap-3 mt-4">
                 <Button
-                  variant="outline"
                   size="sm"
-                  onClick={handleCancelEdit}
-                  className="flex items-center gap-1"
+                  variant="outline"
+                  onClick={() => setIsEditing(false)}
+                  disabled={isUpdating}
+                  className="border-gray-300 hover:bg-gray-100"
                 >
-                  <X className="h-4 w-4" /> Cancelar
+                  <X className="w-4 h-4 mr-1" />
+                  Cancelar
                 </Button>
                 <Button
                   size="sm"
                   onClick={handleSaveEdit}
                   disabled={isUpdating}
-                  className="flex items-center gap-1"
+                  className={cn(
+                    "bg-green-600 hover:bg-green-700 text-white font-medium px-4 py-2",
+                    isUpdating && "opacity-50 cursor-not-allowed"
+                  )}
                 >
-                  <Save className="h-4 w-4" /> Guardar
+                  {isUpdating ? (
+                    <div className="flex items-center">
+                      <div className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full mr-2"></div>
+                      Guardando...
+                    </div>
+                  ) : (
+                    <div className="flex items-center">
+                      <Save className="w-4 h-4 mr-2" />
+                      Guardar Cambios
+                    </div>
+                  )}
                 </Button>
               </div>
             </div>
