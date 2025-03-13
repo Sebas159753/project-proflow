@@ -1,4 +1,3 @@
-
 import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { format } from "date-fns";
@@ -77,16 +76,31 @@ export function TaskCard({ task, users }: TaskCardProps) {
   const handleSaveEdit = async () => {
     try {
       setIsUpdating(true);
-      
+
       // Preparar los datos para enviar al servidor
       const dataToUpdate = {
         title: editedTask.title,
         description: editedTask.description,
         progress: editedTask.progress,
-        dueDate: editedTask.dueDate instanceof Date 
-          ? editedTask.dueDate.toISOString() 
-          : editedTask.dueDate
+        status: editedTask.status,
+        priority: editedTask.priority
       };
+
+      // Asegurarse que la fecha se procesa correctamente
+      // Si es string, asegurar que está en formato ISO
+      if (editedTask.dueDate) {
+        let formattedDate;
+        if (editedTask.dueDate instanceof Date) {
+          formattedDate = editedTask.dueDate.toISOString();
+        } else if (typeof editedTask.dueDate === 'string') {
+          // Si ya es string, intentar convertirlo a fecha y luego a ISO
+          formattedDate = new Date(editedTask.dueDate).toISOString();
+        }
+        dataToUpdate.dueDate = formattedDate;
+      }
+
+      // Mostrar en consola los datos que se envían
+      console.log("Datos enviados al servidor:", dataToUpdate);
 
       // Realizar la solicitud API
       await apiRequest(`/api/tasks/${task.id}`, {
@@ -125,7 +139,7 @@ export function TaskCard({ task, users }: TaskCardProps) {
         await apiRequest(`/api/tasks/${task.id}`, {
           method: "DELETE",
         });
-        
+
         queryClient.invalidateQueries({ queryKey: ["/api/tasks"] });
         toast({
           title: "Tarea eliminada",
@@ -155,10 +169,10 @@ export function TaskCard({ task, users }: TaskCardProps) {
             progress: 100,
           },
         });
-        
+
         // Agregar puntos por completar la tarea
         addPointsForTaskCompletion(task.priority);
-        
+
         queryClient.invalidateQueries({ queryKey: ["/api/tasks"] });
         toast({
           title: "¡Tarea completada!",
@@ -200,6 +214,7 @@ export function TaskCard({ task, users }: TaskCardProps) {
                   value={editedTask.description || ""}
                   onChange={(e) => setEditedTask({ ...editedTask, description: e.target.value })}
                   className="mb-2"
+                  maxLength={100}
                 />
               </div>
 
@@ -259,8 +274,8 @@ export function TaskCard({ task, users }: TaskCardProps) {
             <div>
               <div className="flex justify-between items-start mb-2">
                 <div className="flex-1">
-                  <h3 className="font-semibold text-ellipsis overflow-hidden" style={{ maxWidth: "200px" }}>{task.title}</h3>
-                  <p className="text-sm text-muted-foreground line-clamp-2 mt-1">
+                  <h3 className="font-semibold text-ellipsis overflow-hidden truncate max-w-[180px]" title={task.title}>{task.title}</h3>
+                  <p className="text-sm text-muted-foreground line-clamp-2 mt-1" title={task.description}>
                     {task.description}
                   </p>
                 </div>
