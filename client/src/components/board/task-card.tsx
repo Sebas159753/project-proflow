@@ -159,12 +159,14 @@ export function TaskCard({ task, users }: TaskCardProps) {
         description: editedTask.description,
         status: editedTask.status,
         priority: editedTask.priority,
-        dueDate: editedTask.dueDate instanceof Date
-          ? editedTask.dueDate.toISOString()
-          : typeof editedTask.dueDate === 'string'
-            ? new Date(editedTask.dueDate).toISOString()
-            : task.dueDate // mantener el valor original si hay algún problema
+        dueDate: editedTask.dueDate 
+          ? (editedTask.dueDate instanceof Date 
+              ? editedTask.dueDate.toISOString() 
+              : new Date(editedTask.dueDate).toISOString())
+          : task.dueDate
       };
+
+      console.log("Enviando actualización de tarea:", updatedTask);
 
       // Enviar solo los campos necesarios
       await fetch(`/api/tasks/${task.id}`, {
