@@ -43,35 +43,40 @@ export function EditTaskDialog({ task, users, open, onOpenChange }: EditTaskDial
     longBreakDuration: task.longBreakDuration
   });
 
+  const [isSaving, setIsSaving] = useState(false); // Added state for saving indicator
+
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
   const handleSave = async () => {
+    setIsSaving(true);
+
     try {
-      await apiRequest(`/api/tasks/${task.id}`, {
+      // Actualizar el formato para que coincida con el esperado en el servidor
+      await fetch(`/api/tasks/${task.id}`, {
         method: 'PATCH',
-        body: {
-          ...editedTask,
-          dueDate: editedTask.dueDate.toISOString()
-        }
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(editedTask),
+        credentials: 'include'
       });
 
       // Invalidar y refrescar la caché
-      await queryClient.invalidateQueries({ queryKey: ["tasks"] });
+      await queryClient.invalidateQueries({ queryKey: ["/api/tasks"] });
 
       toast({
         title: "¡Éxito!",
-        description: "Tarea actualizada correctamente",
-        className: "bg-green-500 text-white"
+        description: "La tarea ha sido actualizada correctamente.",
       });
-
       onOpenChange(false);
     } catch (error) {
+      console.error('Error al actualizar la tarea:', error);
       toast({
-        variant: "destructive",
         title: "Error",
-        description: "No se pudo actualizar la tarea"
+        description: "No se pudo actualizar la tarea",
+        variant: "destructive"
       });
+    } finally {
+      setIsSaving(false);
     }
   };
 

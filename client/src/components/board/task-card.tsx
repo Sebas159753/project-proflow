@@ -59,18 +59,22 @@ export function TaskCard({ task, users }: TaskCardProps) {
     task.assignedUserIds.includes(user.id)
   );
 
-  const handleProgressChange = async (newValue: number[]) => {
-    const progressValue = newValue[0];
+  const handleProgressChange = async (value: number[]) => {
+    const progressValue = value[0];
+    if (progressValue === progress) return;
+
     setProgress(progressValue);
     setIsUpdating(true);
 
     try {
-      await apiRequest(`/api/tasks/${task.id}`, {
+      await fetch(`/api/tasks/${task.id}`, {
         method: 'PATCH',
-        body: {
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
           progress: progressValue,
           status: progressValue === 100 ? TaskStatus.COMPLETED : task.status
-        }
+        }),
+        credentials: 'include'
       });
 
       // Si la tarea se completó, otorgar puntos al usuario asignado

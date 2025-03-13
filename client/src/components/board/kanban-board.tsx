@@ -53,8 +53,11 @@ export function KanbanBoard({ tasks, users }: KanbanBoardProps) {
     const newStatus = destination.droppableId;
 
     try {
-      await apiRequest("PATCH", `/api/tasks/${taskId}`, {
-        status: newStatus
+      await fetch(`/api/tasks/${taskId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: newStatus }),
+        credentials: 'include'
       });
 
       queryClient.invalidateQueries({ queryKey: ["/api/tasks"] });
