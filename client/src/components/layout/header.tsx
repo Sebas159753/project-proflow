@@ -30,7 +30,7 @@ export function Header({ users = [] }: HeaderProps) {
           </p>
         </div>
         <div className="flex items-center gap-6">
-          <UserLevelDisplay user={currentUser} />
+          {currentUser && <UserLevelDisplay user={currentUser} />}
           <AccessibilityToggle />
           <Button onClick={() => setShowNewTask(true)} className="bg-blue-600 hover:bg-blue-700 text-white">
             <Plus className="h-4 w-4 mr-2" />

@@ -32,6 +32,21 @@ function calculateProgress(points: number): { currentLevel: string; progress: nu
 }
 
 export function UserLevelDisplay({ user }: UserLevelDisplayProps) {
+  // Si no hay usuario, mostramos un estado por defecto
+  if (!user) {
+    return (
+      <div className="flex items-center gap-4">
+        <div className="flex flex-col">
+          <span className="text-sm font-medium">Sin usuario</span>
+          <span className="text-xs text-muted-foreground">0 puntos</span>
+        </div>
+        <div className="w-32">
+          <Progress value={0} className="h-2" />
+        </div>
+      </div>
+    );
+  }
+
   const { currentLevel, progress, nextLevel } = calculateProgress(user.points);
   const currentLevelInfo = UserLevels[currentLevel as keyof typeof UserLevels];
   const nextLevelInfo = nextLevel ? UserLevels[nextLevel as keyof typeof UserLevels] : null;
