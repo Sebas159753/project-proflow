@@ -65,9 +65,12 @@ export function TaskCard({ task, users }: TaskCardProps) {
     setIsUpdating(true);
 
     try {
-      await apiRequest('PATCH', `/api/tasks/${task.id}`, {
-        progress: progressValue,
-        status: progressValue === 100 ? TaskStatus.COMPLETED : task.status
+      await apiRequest(`/api/tasks/${task.id}`, {
+        method: 'PATCH',
+        body: {
+          progress: progressValue,
+          status: progressValue === 100 ? TaskStatus.COMPLETED : task.status
+        }
       });
 
       // Si la tarea se completó, otorgar puntos al usuario asignado
