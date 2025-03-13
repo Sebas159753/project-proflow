@@ -23,23 +23,26 @@ const columns = [
   { id: TaskStatus.COMPLETED, title: "Completed", className: "bg-[#01579B]" }
 ];
 
-export function KanbanBoard({ tasks, users }: KanbanBoardProps) {
+export function KanbanBoard({ tasks = [], users = [] }: KanbanBoardProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
+  // Asegurar que tasks es un array
+  const tasksArray = Array.isArray(tasks) ? tasks : [];
+
   // Configurar Fuse.js para búsqueda difusa
-  const fuse = useMemo(() => new Fuse(tasks, {
+  const fuse = useMemo(() => new Fuse(tasksArray, {
     keys: ['title', 'description'],
     threshold: 0.4,
     shouldSort: true
-  }), [tasks]);
+  }), [tasksArray]);
 
   // Filtrar tareas basado en la búsqueda
   const filteredTasks = useMemo(() => {
-    if (!searchQuery) return tasks;
+    if (!searchQuery) return tasksArray;
     return fuse.search(searchQuery).map(result => result.item);
-  }, [searchQuery, tasks, fuse]);
+  }, [searchQuery, tasksArray, fuse]);
 
   const getTasksByStatus = (status: string) => {
     return filteredTasks.filter(task => task.status === status);

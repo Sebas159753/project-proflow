@@ -38,9 +38,9 @@ const getPriorityColor = (priority: string) => {
 
 const EMOJIS = ["🎉", "🎊", "✨", "🌟", "💫", "🎯"];
 
-export function TaskCard({ task, users }: TaskCardProps) {
+export function TaskCard({ task, users = [] }: TaskCardProps) {
   const [showPomodoro, setShowPomodoro] = useState(false);
-  const [progress, setProgress] = useState(task.progress);
+  const [progress, setProgress] = useState(task?.progress || 0);
   const [isUpdating, setIsUpdating] = useState(false);
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [showCelebration, setShowCelebration] = useState(false);
@@ -55,9 +55,10 @@ export function TaskCard({ task, users }: TaskCardProps) {
     }
   }, [progress]);
 
-  const assignedUsers = users.filter(user =>
-    task.assignedUserIds.includes(user.id)
-  );
+  // Asegurar que users es un array y task tiene assignedUserIds
+  const assignedUsers = Array.isArray(users) && task?.assignedUserIds 
+    ? users.filter(user => task.assignedUserIds.includes(user.id))
+    : [];
 
   const handleProgressChange = async (value: number[]) => {
     const progressValue = value[0];

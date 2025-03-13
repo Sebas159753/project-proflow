@@ -7,14 +7,21 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 export default function Dashboard() {
   const { data: tasks, isLoading: tasksLoading } = useQuery({
     queryKey: ["tasks"],
+    initialData: [], // Proporcionar un array vacío como valor inicial
   });
 
   const { data: users, isLoading: usersLoading } = useQuery({
     queryKey: ["users"],
+    initialData: [], // Proporcionar un array vacío como valor inicial
   });
 
   if (tasksLoading || usersLoading) {
-    return <div>Loading...</div>;
+    return <div className="flex h-screen items-center justify-center">
+      <div className="text-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500 mx-auto"></div>
+        <p className="mt-4">Cargando datos...</p>
+      </div>
+    </div>;
   }
 
   return (
