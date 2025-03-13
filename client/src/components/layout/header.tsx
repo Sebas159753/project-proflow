@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { NewTaskDialog } from "@/components/dialogs/new-task-dialog";
 import type { User } from "@shared/schema";
 import { format } from "date-fns";
@@ -15,7 +15,7 @@ interface HeaderProps {
 export function Header({ users = [] }: HeaderProps) {
   const [showNewTask, setShowNewTask] = useState(false);
   const currentUser = users && users.length > 0 ? users[0] : null; // Manejo seguro
-  
+
   useEffect(() => {
     console.log("Header - Usuarios disponibles:", users);
   }, [users]);
@@ -24,7 +24,7 @@ export function Header({ users = [] }: HeaderProps) {
     <div className="border-b px-6 py-3">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-semibold">¡Bienvenido {currentUser.name}!</h1>
+          <h1 className="text-xl font-semibold">¡Bienvenido {currentUser?.name}!</h1>
           <p className="text-sm text-muted-foreground">
             {format(new Date(), "d 'de' MMMM, yyyy", { locale: es })}
           </p>
