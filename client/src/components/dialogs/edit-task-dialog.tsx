@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -85,9 +84,9 @@ export function EditTaskDialog({ task, users = [], open, onOpenChange }: EditTas
         ...editedTask,
         dueDate: editedTask.dueDate.toISOString()
       };
-      
+
       console.log("Guardando tarea con datos:", taskData);
-      
+
       // Enviar al servidor
       await fetch(`/api/tasks/${task.id}`, {
         method: 'PATCH',
@@ -191,9 +190,8 @@ export function EditTaskDialog({ task, users = [], open, onOpenChange }: EditTas
           <div className="space-y-2">
             <label>Asignado a</label>
             <Select
-              value={editedTask.assignedUserIds[0]?.toString() || ""}
+              value={editedTask.assignedUserIds.length > 0 ? editedTask.assignedUserIds[0].toString() : ""}
               onValueChange={(value) => {
-                console.log("Seleccionando usuario:", value);
                 setEditedTask(prev => ({ 
                   ...prev, 
                   assignedUserIds: value ? [parseInt(value)] : [] 
@@ -204,7 +202,7 @@ export function EditTaskDialog({ task, users = [], open, onOpenChange }: EditTas
                 <SelectValue placeholder="Seleccionar responsable" />
               </SelectTrigger>
               <SelectContent>
-                {users && users.length > 0 ? (
+                {users.length > 0 ? (
                   users.map((user) => (
                     <SelectItem key={user.id} value={user.id.toString()}>
                       {user.name}
