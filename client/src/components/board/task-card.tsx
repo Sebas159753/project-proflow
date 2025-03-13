@@ -1,4 +1,3 @@
-
 import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { format } from "date-fns";
@@ -46,13 +45,13 @@ export function TaskCard({ task, users }: TaskCardProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { addPointsForTaskCompletion } = usePoints();
-  
+
   const [editedTask, setEditedTask] = useState<Task>({
     ...task,
   });
 
   // Usuarios asignados a la tarea actual
-  const assignedUsers = users.filter((user) => 
+  const assignedUsers = users.filter((user) =>
     task.assignedUserIds.includes(user.id)
   );
 
@@ -62,62 +61,25 @@ export function TaskCard({ task, users }: TaskCardProps) {
   console.log("TaskCard - Usuarios asignados filtrados:", assignedUsers);
 
   // Formatear la fecha de vencimiento
-  const formattedDueDate = task.dueDate 
+  const formattedDueDate = task.dueDate
     ? format(new Date(task.dueDate), "dd/MM/yyyy")
     : "Sin fecha";
 
-  const handleEditClick = () => {
-    setIsEditing(true);
-    setEditedTask({...task});
-  };
-
-  const handleCancelEdit = () => {
-    setIsEditing(false);
-  };
-
   const handleSaveEdit = async () => {
     setIsUpdating(true);
-
     try {
-      // Crear objeto solo con los campos que queremos actualizar
-      const updatedTaskData = {
-        title: editedTask.title,
-        description: editedTask.description,
-        status: editedTask.status,
-        priority: editedTask.priority,
-        progress: editedTask.progress,
-        dueDate: editedTask.dueDate instanceof Date 
-          ? editedTask.dueDate.toISOString() 
-          : typeof editedTask.dueDate === 'string'
-            ? new Date(editedTask.dueDate).toISOString()
-            : null
-      };
-
-      console.log("Enviando actualización de tarea:", updatedTaskData);
-      
-      // Enviar la solicitud de actualización
-      await apiRequest(`/api/tasks/${task.id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(updatedTaskData),
-      });
-
-      // Mostrar notificación de éxito
+      await apiRequest(`/api/tasks/${task.id}`, "PATCH", editedTask);
+      queryClient.invalidateQueries(["tasks"]);
       toast({
         title: "Tarea actualizada",
-        description: "La tarea se ha actualizado con éxito",
+        description: "La tarea se ha actualizado correctamente.",
       });
-
-      // Actualizar la cache de consultas
-      queryClient.invalidateQueries(['tasks']);
-      
-      // Salir del modo de edición
       setIsEditing(false);
     } catch (error) {
       console.error("Error al actualizar la tarea:", error);
       toast({
         title: "Error",
-        description: "No se pudo actualizar la tarea",
+        description: "No se pudo actualizar la tarea.",
         variant: "destructive",
       });
     } finally {
@@ -125,78 +87,42 @@ export function TaskCard({ task, users }: TaskCardProps) {
     }
   };
 
+  const handleEditClick = () => {
+    setIsEditing(true);
+  };
+
+  const handleCancelEdit = () => {
+    setEditedTask({
+      ...task,
+    });
+    setIsEditing(false);
+  };
+
   const handleDelete = async () => {
-    if (isDeleting) return;
-    setIsDeleting(true);
-
-    try {
-      await apiRequest(`/api/tasks/${task.id}`, {
-        method: 'DELETE',
-      });
-
-      queryClient.invalidateQueries(['tasks']);
-      toast({
-        title: "Tarea eliminada",
-        description: "La tarea se ha eliminado con éxito",
-      });
-    } catch (error) {
-      console.error("Error al eliminar la tarea:", error);
-      toast({
-        title: "Error",
-        description: "No se pudo eliminar la tarea",
-        variant: "destructive",
-      });
-    } finally {
-      setIsDeleting(false);
+    if (window.confirm("¿Estás seguro de que quieres eliminar esta tarea?")) {
+      setIsDeleting(true);
+      try {
+        await apiRequest(`/api/tasks/${task.id}`, "DELETE");
+        queryClient.invalidateQueries(["tasks"]);
+        toast({
+          title: "Tarea eliminada",
+          description: "La tarea se ha eliminado correctamente.",
+        });
+      } catch (error) {
+        console.error("Error al eliminar la tarea:", error);
+        toast({
+          title: "Error",
+          description: "No se pudo eliminar la tarea.",
+          variant: "destructive",
+        });
+      } finally {
+        setIsDeleting(false);
+      }
     }
   };
 
-  const handleStatusChange = async (newStatus: string) => {
-    if (newStatus === TaskStatus.COMPLETED && task.status !== TaskStatus.COMPLETED) {
-      addPointsForTaskCompletion(1, task.priority);
-    }
-
-    try {
-      await apiRequest(`/api/tasks/${task.id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status: newStatus }),
-      });
-
-      queryClient.invalidateQueries(['tasks']);
-      toast({
-        title: "Estado actualizado",
-        description: `Tarea movida a "${newStatus}"`,
-      });
-    } catch (error) {
-      console.error("Error al actualizar el estado:", error);
-      toast({
-        title: "Error",
-        description: "No se pudo actualizar el estado",
-        variant: "destructive",
-      });
-    }
-  };
-
-  const handleProgressChange = async (newProgress: number[]) => {
-    const progress = newProgress[0];
-    
-    try {
-      await apiRequest(`/api/tasks/${task.id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ progress }),
-      });
-
-      queryClient.invalidateQueries(['tasks']);
-    } catch (error) {
-      console.error("Error al actualizar el progreso:", error);
-      toast({
-        title: "Error",
-        description: "No se pudo actualizar el progreso",
-        variant: "destructive",
-      });
-    }
+  const handleToggleTimer = () => {
+    setShowTimer(!showTimer);
   };
 
   return (
@@ -213,7 +139,7 @@ export function TaskCard({ task, users }: TaskCardProps) {
                 placeholder="Título de la tarea"
               />
             </div>
-            
+
             <div className="space-y-2">
               <label className="text-sm text-muted-foreground">Descripción</label>
               <Input
@@ -222,12 +148,12 @@ export function TaskCard({ task, users }: TaskCardProps) {
                 placeholder="Descripción"
               />
             </div>
-            
+
             <div className="grid grid-cols-2 gap-2 mb-2">
               {/* Status Select */}
               <Select
                 value={editedTask.status}
-                onValueChange={(value) => setEditedTask({ ...editedTask, status: value as TaskStatusType })}
+                onValueChange={(value) => setEditedTask({ ...editedTask, status: value as TaskStatus })}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Estado" />
@@ -240,11 +166,11 @@ export function TaskCard({ task, users }: TaskCardProps) {
                   ))}
                 </SelectContent>
               </Select>
-              
+
               {/* Priority Select */}
               <Select
                 value={editedTask.priority}
-                onValueChange={(value) => setEditedTask({ ...editedTask, priority: value as TaskPriorityType })}
+                onValueChange={(value) => setEditedTask({ ...editedTask, priority: value as TaskPriority })}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Prioridad" />
@@ -258,30 +184,26 @@ export function TaskCard({ task, users }: TaskCardProps) {
                 </SelectContent>
               </Select>
             </div>
-            
+
             {/* Due Date field */}
             <div className="mb-2">
               <label className="text-sm text-muted-foreground mb-1 block">Fecha de vencimiento</label>
               <Input
                 type="date"
                 value={
-                  editedTask.dueDate 
-                    ? new Date(editedTask.dueDate).toISOString().split('T')[0]
-                    : ''
+                  editedTask.dueDate
+                    ? new Date(editedTask.dueDate).toISOString().split("T")[0]
+                    : ""
                 }
                 onChange={(e) => {
                   const date = e.target.value ? new Date(e.target.value) : null;
-                  setEditedTask({ 
-                    ...editedTask, 
-                    dueDate: date 
-                  });
+                  setEditedTask({ ...editedTask, dueDate: date });
                 }}
-                className="w-full"
               />
             </div>
-            
-            {/* Progreso */}
-            <div className="space-y-2">
+
+            {/* Progress Slider */}
+            <div className="space-y-2 mb-4">
               <div className="flex justify-between items-center">
                 <label className="text-sm text-muted-foreground">Progreso: {editedTask.progress}%</label>
               </div>
@@ -293,28 +215,24 @@ export function TaskCard({ task, users }: TaskCardProps) {
                 onValueChange={(value) => setEditedTask({ ...editedTask, progress: value[0] })}
               />
             </div>
-            
-            {/* Botones de acción */}
-            <div className="flex justify-end space-x-2 pt-2">
-              <Button 
-                variant="outline" 
-                size="sm" 
+
+            {/* Action Buttons */}
+            <div className="flex gap-2 justify-end">
+              <Button
+                variant="outline"
+                size="sm"
                 onClick={handleCancelEdit}
-                disabled={isUpdating}
+                className="flex items-center gap-1"
               >
-                <X className="h-4 w-4 mr-1" /> Cancelar
+                <X className="h-4 w-4" /> Cancelar
               </Button>
-              <Button 
-                variant="default" 
-                size="sm" 
+              <Button
+                size="sm"
                 onClick={handleSaveEdit}
                 disabled={isUpdating}
+                className="flex items-center gap-1"
               >
-                {isUpdating ? "Guardando..." : (
-                  <>
-                    <Save className="h-4 w-4 mr-1" /> Guardar
-                  </>
-                )}
+                <Save className="h-4 w-4" /> Guardar
               </Button>
             </div>
           </div>
@@ -323,7 +241,7 @@ export function TaskCard({ task, users }: TaskCardProps) {
           <div>
             <div className="flex justify-between items-start mb-2">
               <div className="flex-1">
-                <h3 className="font-semibold truncate">{task.title}</h3>
+                <h3 className="font-semibold truncate max-w-[200px]">{task.title}</h3>
                 <p className="text-sm text-muted-foreground line-clamp-2 mt-1">
                   {task.description}
                 </p>
@@ -366,34 +284,29 @@ export function TaskCard({ task, users }: TaskCardProps) {
               <Progress value={task.progress} className="h-2" />
             </div>
 
-            <div className="flex justify-between items-center">
-              <div className="flex space-x-1">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="text-xs"
-                  onClick={() => setShowTimer(!showTimer)}
-                >
-                  <Timer className="h-3 w-3 mr-1" />
-                  {showTimer ? "Ocultar" : "Pomodoro"}
-                </Button>
+            {assignedUsers.length > 0 && (
+              <div className="mb-4">
+                <div className="text-sm text-muted-foreground mb-1">Asignado a:</div>
+                <div className="flex flex-wrap gap-1">
+                  {assignedUsers.map((user) => (
+                    <Badge key={user.id} variant="secondary" className="text-xs">
+                      {user.name}
+                    </Badge>
+                  ))}
+                </div>
               </div>
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                className="flex space-x-1"
+            )}
+
+            <div className="flex justify-end">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleToggleTimer}
+                className="flex items-center gap-1"
               >
-                {task.status !== TaskStatus.COMPLETED && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="text-xs bg-green-50 text-green-700 hover:bg-green-100"
-                    onClick={() => handleStatusChange(TaskStatus.COMPLETED)}
-                  >
-                    Completar
-                  </Button>
-                )}
-              </motion.div>
+                <Timer className="h-4 w-4" />
+                {showTimer ? "Ocultar timer" : "Mostrar timer"}
+              </Button>
             </div>
 
             {showTimer && (
