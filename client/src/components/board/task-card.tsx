@@ -16,6 +16,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { usePoints } from "@/hooks/use-points";
 import { cn } from "@/lib/utils";
+import { TaskEditDialog } from "./task-edit-dialog";
 
 interface TaskCardProps {
   task: Task;

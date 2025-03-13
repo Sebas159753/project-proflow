@@ -67,44 +67,36 @@ export function TaskEditDialog({ task, isOpen, onClose }: TaskEditDialogProps) {
         description: formData.description,
         status: formData.status,
         priority: formData.priority,
-        progress: formData.progress,
+        progress: parseInt(formData.progress.toString()),
         dueDate: formData.dueDate ? new Date(formData.dueDate).toISOString() : null,
       };
 
-      // Enviar al servidor
+      console.log("Datos a actualizar:", dataToUpdate);
+
+      // Realizar la actualización
       const response = await fetch(`/api/tasks/${task.id}`, {
         method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(dataToUpdate),
         credentials: "include",
       });
 
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(
-          errorData.message || `Error HTTP: ${response.status}`
-        );
+        throw new Error("Error al actualizar la tarea");
       }
 
-      // Actualizar caché
-      await queryClient.invalidateQueries({ queryKey: ["/api/tasks"] });
-
-      // Notificación de éxito
+      // Actualizar caché y cerrar
+      await queryClient.invalidateQueries({ queryKey: ["tasks"] });
       toast({
-        title: "¡Tarea actualizada!",
+        title: "Tarea actualizada",
         description: "La tarea se ha actualizado correctamente.",
-        className: "bg-green-500 text-white",
       });
-
-      // Cerrar diálogo
       onClose();
     } catch (error) {
       console.error("Error al actualizar la tarea:", error);
       toast({
         title: "Error",
-        description: "No se pudo actualizar la tarea. Por favor, inténtalo de nuevo.",
+        description: "No se pudo actualizar la tarea.",
         variant: "destructive",
       });
     } finally {
@@ -116,42 +108,49 @@ export function TaskEditDialog({ task, isOpen, onClose }: TaskEditDialogProps) {
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
-          <DialogTitle className="text-xl font-bold">Editar Tarea</DialogTitle>
+          <DialogTitle>Editar Tarea</DialogTitle>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4 py-2">
           <div className="space-y-2">
-            <label className="text-sm font-medium">Título</label>
+            <label htmlFor="title" className="text-sm font-medium">
+              Título
+            </label>
             <Input
+              id="title"
               name="title"
               value={formData.title}
               onChange={handleChange}
-              maxLength={50}
-              className="w-full"
+              placeholder="Título de la tarea"
               required
             />
           </div>
 
           <div className="space-y-2">
-            <label className="text-sm font-medium">Descripción</label>
+            <label htmlFor="description" className="text-sm font-medium">
+              Descripción
+            </label>
             <Textarea
+              id="description"
               name="description"
               value={formData.description}
               onChange={handleChange}
-              maxLength={250}
-              className="w-full resize-none min-h-[80px]"
+              placeholder="Descripción de la tarea"
+              rows={3}
             />
           </div>
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <label className="text-sm font-medium">Estado</label>
+              <label htmlFor="status" className="text-sm font-medium">
+                Estado
+              </label>
               <Select
                 value={formData.status}
                 onValueChange={(value) => handleSelectChange("status", value)}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="Estado" />
+                  <SelectValue placeholder="Seleccionar estado" />
                 </SelectTrigger>
                 <SelectContent>
                   {Object.values(TaskStatus).map((status) => (
@@ -164,13 +163,15 @@ export function TaskEditDialog({ task, isOpen, onClose }: TaskEditDialogProps) {
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm font-medium">Prioridad</label>
+              <label htmlFor="priority" className="text-sm font-medium">
+                Prioridad
+              </label>
               <Select
                 value={formData.priority}
                 onValueChange={(value) => handleSelectChange("priority", value)}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="Prioridad" />
+                  <SelectValue placeholder="Seleccionar prioridad" />
                 </SelectTrigger>
                 <SelectContent>
                   {Object.values(TaskPriority).map((priority) => (
@@ -184,40 +185,39 @@ export function TaskEditDialog({ task, isOpen, onClose }: TaskEditDialogProps) {
           </div>
 
           <div className="space-y-2">
-            <label className="text-sm font-medium">Fecha de vencimiento</label>
-            <Input
-              type="date"
-              name="dueDate"
-              value={formData.dueDate}
-              onChange={handleChange}
-              className="w-full"
+            <label htmlFor="progress" className="text-sm font-medium">
+              Progreso: {formData.progress}%
+            </label>
+            <Slider
+              id="progress"
+              min={0}
+              max={100}
+              step={10}
+              value={[formData.progress]}
+              onValueChange={(value) => handleSelectChange("progress", value[0].toString())}
+              className="py-4"
             />
           </div>
 
           <div className="space-y-2">
-            <div className="flex justify-between items-center">
-              <label className="text-sm font-medium">
-                Progreso: {formData.progress}%
-              </label>
-            </div>
-            <Slider
-              value={[formData.progress]}
-              min={0}
-              max={100}
-              step={5}
-              onValueChange={(value) =>
-                setFormData((prev) => ({ ...prev, progress: value[0] }))
-              }
-              className="my-2"
+            <label htmlFor="dueDate" className="text-sm font-medium">
+              Fecha límite
+            </label>
+            <Input
+              id="dueDate"
+              name="dueDate"
+              type="date"
+              value={formData.dueDate}
+              onChange={handleChange}
             />
           </div>
 
-          <DialogFooter className="mt-6 flex justify-end gap-3">
+          <DialogFooter className="pt-4">
             <Button
               type="button"
               variant="outline"
               onClick={onClose}
-              className="border-gray-300"
+              className="mr-2"
             >
               Cancelar
             </Button>
@@ -225,20 +225,19 @@ export function TaskEditDialog({ task, isOpen, onClose }: TaskEditDialogProps) {
               type="submit"
               disabled={isSubmitting}
               className={cn(
-                "bg-blue-600 hover:bg-blue-700 text-white",
-                isSubmitting && "opacity-70 cursor-not-allowed"
+                "bg-primary text-primary-foreground hover:bg-primary/90",
               )}
             >
               {isSubmitting ? (
-                <div className="flex items-center">
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  Actualizando...
-                </div>
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Guardando...
+                </>
               ) : (
-                <div className="flex items-center">
-                  <Save className="h-4 w-4 mr-2" />
-                  Guardar Cambios
-                </div>
+                <>
+                  <Save className="mr-2 h-4 w-4" />
+                  Guardar cambios
+                </>
               )}
             </Button>
           </DialogFooter>
