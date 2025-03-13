@@ -60,13 +60,8 @@ export function KanbanBoard({ tasks, users }: KanbanBoardProps) {
         credentials: 'include'
       });
 
-      queryClient.invalidateQueries({ queryKey: ["/api/tasks"] });
-
-      toast({
-        title: "¡Tarea actualizada!",
-        description: `Tarea movida a ${columns.find(col => col.id === newStatus)?.title}`,
-        className: "bg-green-500 text-white"
-      });
+      // Asegurar la actualización completa de la caché después de arrastrar
+      await queryClient.invalidateQueries({ queryKey: ["tasks"] });
     } catch (error) {
       console.error("Error al actualizar la tarea:", error);
       toast({

@@ -6,11 +6,11 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 
 export default function Dashboard() {
   const { data: tasks, isLoading: tasksLoading } = useQuery({
-    queryKey: ["/api/tasks"],
+    queryKey: ["tasks"],
   });
 
   const { data: users, isLoading: usersLoading } = useQuery({
-    queryKey: ["/api/users"],
+    queryKey: ["users"],
   });
 
   if (tasksLoading || usersLoading) {
