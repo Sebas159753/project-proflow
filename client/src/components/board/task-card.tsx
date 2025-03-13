@@ -55,9 +55,18 @@ export function TaskCard({ task, users }: TaskCardProps) {
     }
   }, [progress]);
 
-  const assignedUsers = users.filter(user =>
-    task.assignedUserIds.includes(user.id)
-  );
+  // Asegurarnos de que task.assignedUserIds es un array
+  const assignedUsers = Array.isArray(users) && Array.isArray(task.assignedUserIds) 
+    ? users.filter(user => task.assignedUserIds.includes(user.id))
+    : [];
+  
+  // Log para depuración
+  useEffect(() => {
+    console.log("TaskCard - ID de tarea:", task.id);
+    console.log("TaskCard - Usuarios disponibles:", users);
+    console.log("TaskCard - IDs de usuarios asignados:", task.assignedUserIds);
+    console.log("TaskCard - Usuarios asignados filtrados:", assignedUsers);
+  }, [task, users]);
 
   const handleProgressChange = async (value: number[]) => {
     const progressValue = value[0];
@@ -140,8 +149,9 @@ export function TaskCard({ task, users }: TaskCardProps) {
               <Button
                 variant="ghost"
                 size="sm"
-                className="text-blue-500 hover:text-blue-700 hover:bg-blue-100 transition-colors duration-200"
+                className="text-blue-500 hover:text-blue-700 hover:bg-blue-100 transition-all duration-200 transform hover:scale-105"
                 onClick={() => setShowEditDialog(true)}
+                title="Editar tarea"
               >
                 <Edit className="h-4 w-4" />
               </Button>

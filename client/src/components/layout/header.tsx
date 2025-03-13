@@ -12,9 +12,13 @@ interface HeaderProps {
   users: User[];
 }
 
-export function Header({ users }: HeaderProps) {
+export function Header({ users = [] }: HeaderProps) {
   const [showNewTask, setShowNewTask] = useState(false);
-  const currentUser = users[0]; // Por ahora usamos el primer usuario
+  const currentUser = users && users.length > 0 ? users[0] : null; // Manejo seguro
+  
+  useEffect(() => {
+    console.log("Header - Usuarios disponibles:", users);
+  }, [users]);
 
   return (
     <div className="border-b px-6 py-3">

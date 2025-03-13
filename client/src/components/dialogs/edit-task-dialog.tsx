@@ -1,3 +1,4 @@
+
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -12,7 +13,7 @@ import { TaskStatus, TaskPriority, type Task, type User } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Calendar } from "@/components/ui/calendar";
 import {
   Select,
@@ -29,24 +30,51 @@ interface EditTaskDialogProps {
   onOpenChange: (open: boolean) => void;
 }
 
-export function EditTaskDialog({ task, users, open, onOpenChange }: EditTaskDialogProps) {
+export function EditTaskDialog({ task, users = [], open, onOpenChange }: EditTaskDialogProps) {
   const [editedTask, setEditedTask] = useState({
     title: task.title,
     description: task.description,
     status: task.status,
     priority: task.priority,
     dueDate: new Date(task.dueDate),
-    assignedUserIds: task.assignedUserIds,
+    assignedUserIds: task.assignedUserIds || [],
     pomodoroCount: task.pomodoroCount,
     pomodoroDuration: task.pomodoroDuration,
     shortBreakDuration: task.shortBreakDuration,
     longBreakDuration: task.longBreakDuration
   });
 
-  const [isSaving, setIsSaving] = useState(false); // Added state for saving indicator
+  const [isSaving, setIsSaving] = useState(false);
+
+  // Actualizar el formulario cuando cambia la tarea
+  useEffect(() => {
+    if (open) {
+      setEditedTask({
+        title: task.title,
+        description: task.description,
+        status: task.status,
+        priority: task.priority,
+        dueDate: new Date(task.dueDate),
+        assignedUserIds: task.assignedUserIds || [],
+        pomodoroCount: task.pomodoroCount,
+        pomodoroDuration: task.pomodoroDuration,
+        shortBreakDuration: task.shortBreakDuration,
+        longBreakDuration: task.longBreakDuration
+      });
+    }
+  }, [task, open]);
 
   const { toast } = useToast();
   const queryClient = useQueryClient();
+
+  // Log para depuración
+  useEffect(() => {
+    if (open) {
+      console.log("EditTaskDialog - Usuarios disponibles:", users);
+      console.log("EditTaskDialog - Tarea a editar:", task);
+      console.log("EditTaskDialog - Usuarios asignados:", task.assignedUserIds);
+    }
+  }, [open, users, task]);
 
   const handleSave = async () => {
     setIsSaving(true);
@@ -57,6 +85,8 @@ export function EditTaskDialog({ task, users, open, onOpenChange }: EditTaskDial
         ...editedTask,
         dueDate: editedTask.dueDate.toISOString()
       };
+      
+      console.log("Guardando tarea con datos:", taskData);
       
       // Enviar al servidor
       await fetch(`/api/tasks/${task.id}`, {
@@ -70,16 +100,17 @@ export function EditTaskDialog({ task, users, open, onOpenChange }: EditTaskDial
       await queryClient.invalidateQueries({ queryKey: ["tasks"] });
 
       toast({
-        title: "¡Éxito!",
+        title: "Tarea actualizada",
         description: "La tarea ha sido actualizada correctamente.",
       });
+
       onOpenChange(false);
     } catch (error) {
-      console.error('Error al actualizar la tarea:', error);
+      console.error("Error al guardar la tarea:", error);
       toast({
         title: "Error",
-        description: "No se pudo actualizar la tarea",
-        variant: "destructive"
+        description: "Hubo un problema al actualizar la tarea.",
+        variant: "destructive",
       });
     } finally {
       setIsSaving(false);
@@ -118,7 +149,7 @@ export function EditTaskDialog({ task, users, open, onOpenChange }: EditTaskDial
                 onValueChange={(value) => setEditedTask(prev => ({ ...prev, status: value as typeof prev.status }))}
               >
                 <SelectTrigger>
-                  <SelectValue />
+                  <SelectValue placeholder="Seleccionar estado" />
                 </SelectTrigger>
                 <SelectContent>
                   {Object.values(TaskStatus).map((status) => (
@@ -136,7 +167,7 @@ export function EditTaskDialog({ task, users, open, onOpenChange }: EditTaskDial
                 onValueChange={(value) => setEditedTask(prev => ({ ...prev, priority: value as typeof prev.priority }))}
               >
                 <SelectTrigger>
-                  <SelectValue />
+                  <SelectValue placeholder="Seleccionar prioridad" />
                 </SelectTrigger>
                 <SelectContent>
                   {Object.values(TaskPriority).map((priority) => (
@@ -147,6 +178,45 @@ export function EditTaskDialog({ task, users, open, onOpenChange }: EditTaskDial
                 </SelectContent>
               </Select>
             </div>
+          </div>
+          <div className="space-y-2">
+            <label>Fecha de vencimiento</label>
+            <Calendar
+              mode="single"
+              selected={editedTask.dueDate}
+              onSelect={(date) => date && setEditedTask(prev => ({ ...prev, dueDate: date }))}
+              className="border rounded-md p-3"
+            />
+          </div>
+          <div className="space-y-2">
+            <label>Asignado a</label>
+            <Select
+              value={editedTask.assignedUserIds[0]?.toString() || ""}
+              onValueChange={(value) => {
+                console.log("Seleccionando usuario:", value);
+                setEditedTask(prev => ({ 
+                  ...prev, 
+                  assignedUserIds: value ? [parseInt(value)] : [] 
+                }));
+              }}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Seleccionar responsable" />
+              </SelectTrigger>
+              <SelectContent>
+                {users && users.length > 0 ? (
+                  users.map((user) => (
+                    <SelectItem key={user.id} value={user.id.toString()}>
+                      {user.name}
+                    </SelectItem>
+                  ))
+                ) : (
+                  <SelectItem value="" disabled>
+                    No hay usuarios disponibles
+                  </SelectItem>
+                )}
+              </SelectContent>
+            </Select>
           </div>
           <div className="space-y-2">
             <label>Configuración Pomodoro</label>
@@ -165,14 +235,14 @@ export function EditTaskDialog({ task, users, open, onOpenChange }: EditTaskDial
                 <label className="text-sm">Duración Pomodoro (min)</label>
                 <Input
                   type="number"
-                  min={5}
+                  min={1}
                   max={60}
                   value={editedTask.pomodoroDuration}
                   onChange={(e) => setEditedTask(prev => ({ ...prev, pomodoroDuration: parseInt(e.target.value) }))}
                 />
               </div>
               <div>
-                <label className="text-sm">Descanso Corto (min)</label>
+                <label className="text-sm">Pausa Corta (min)</label>
                 <Input
                   type="number"
                   min={1}
@@ -182,10 +252,10 @@ export function EditTaskDialog({ task, users, open, onOpenChange }: EditTaskDial
                 />
               </div>
               <div>
-                <label className="text-sm">Descanso Largo (min)</label>
+                <label className="text-sm">Pausa Larga (min)</label>
                 <Input
                   type="number"
-                  min={5}
+                  min={1}
                   max={60}
                   value={editedTask.longBreakDuration}
                   onChange={(e) => setEditedTask(prev => ({ ...prev, longBreakDuration: parseInt(e.target.value) }))}
@@ -193,39 +263,16 @@ export function EditTaskDialog({ task, users, open, onOpenChange }: EditTaskDial
               </div>
             </div>
           </div>
-          <div className="space-y-2">
-            <label>Fecha de vencimiento</label>
-            <Calendar
-              mode="single"
-              selected={editedTask.dueDate}
-              onSelect={(date) => date && setEditedTask(prev => ({ ...prev, dueDate: date }))}
-              className="rounded-md border"
-            />
-          </div>
-          <div className="space-y-2">
-            <label>Asignado a</label>
-            <Select
-              value={editedTask.assignedUserIds[0]?.toString()}
-              onValueChange={(value) => setEditedTask(prev => ({ ...prev, assignedUserIds: [parseInt(value)] }))}
-            >
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {users.map((user) => (
-                  <SelectItem key={user.id} value={user.id.toString()}>
-                    {user.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
           <div className="flex justify-end gap-3 pt-4">
             <Button variant="outline" onClick={() => onOpenChange(false)}>
               Cancelar
             </Button>
-            <Button onClick={handleSave} className="bg-blue-600 hover:bg-blue-700 text-white">
-              Guardar Cambios
+            <Button 
+              onClick={handleSave} 
+              className="bg-blue-600 hover:bg-blue-700 text-white"
+              disabled={isSaving}
+            >
+              {isSaving ? 'Guardando...' : 'Guardar Cambios'}
             </Button>
           </div>
         </div>
