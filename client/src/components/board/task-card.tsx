@@ -153,16 +153,20 @@ export function TaskCard({ task, users }: TaskCardProps) {
     setIsUpdating(true);
 
     try {
-      // Asegurarse de que tenemos todos los campos necesarios
+      // Preparar los datos para enviar
       const updatedTask = {
-        ...task,
-        ...editedTask,
-        // Asegurarse de que la fecha es un string ISO
+        title: editedTask.title,
+        description: editedTask.description,
+        status: editedTask.status,
+        priority: editedTask.priority,
         dueDate: editedTask.dueDate instanceof Date
           ? editedTask.dueDate.toISOString()
-          : new Date(editedTask.dueDate).toISOString()
+          : typeof editedTask.dueDate === 'string'
+            ? new Date(editedTask.dueDate).toISOString()
+            : task.dueDate // mantener el valor original si hay algún problema
       };
 
+      // Enviar solo los campos necesarios
       await fetch(`/api/tasks/${task.id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
