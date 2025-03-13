@@ -50,6 +50,7 @@ export function TaskCard({ task, users }: TaskCardProps) {
     description: task.description,
     status: task.status,
     priority: task.priority,
+    dueDate: task.dueDate, // Initialize with existing due date
   });
   const queryClient = useQueryClient();
   const { toast } = useToast();
@@ -136,7 +137,8 @@ export function TaskCard({ task, users }: TaskCardProps) {
       title: task.title,
       description: task.description,
       status: task.status,
-      priority: task.priority
+      priority: task.priority,
+      dueDate: task.dueDate // Include due date in editedTask
     });
     setIsEditing(true);
   };
@@ -151,17 +153,20 @@ export function TaskCard({ task, users }: TaskCardProps) {
     setIsUpdating(true);
 
     try {
-      // Preparar los datos
-      const taskData = {
+      // Asegurarse de que tenemos todos los campos necesarios
+      const updatedTask = {
+        ...task,
         ...editedTask,
-        progress: progress
+        // Asegurarse de que la fecha es un string ISO
+        dueDate: editedTask.dueDate instanceof Date
+          ? editedTask.dueDate.toISOString()
+          : new Date(editedTask.dueDate).toISOString()
       };
 
-      // Enviar al servidor
       await fetch(`/api/tasks/${task.id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(taskData),
+        body: JSON.stringify(updatedTask),
         credentials: 'include'
       });
 
@@ -364,18 +369,18 @@ export function TaskCard({ task, users }: TaskCardProps) {
                   </SelectContent>
                 </Select>
               </div>
-              
+
               {/* Due Date field */}
               <div className="mb-2">
                 <label className="text-sm text-muted-foreground mb-1 block">Fecha de vencimiento</label>
                 <Input
                   type="date"
-                  value={editedTask.dueDate instanceof Date 
-                    ? editedTask.dueDate.toISOString().split('T')[0] 
+                  value={editedTask.dueDate instanceof Date
+                    ? editedTask.dueDate.toISOString().split('T')[0]
                     : new Date(editedTask.dueDate).toISOString().split('T')[0]}
-                  onChange={(e) => setEditedTask(prev => ({ 
-                    ...prev, 
-                    dueDate: new Date(e.target.value) 
+                  onChange={(e) => setEditedTask(prev => ({
+                    ...prev,
+                    dueDate: new Date(e.target.value)
                   }))}
                   className="w-full"
                 />
