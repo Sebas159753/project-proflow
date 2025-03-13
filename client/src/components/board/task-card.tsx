@@ -329,7 +329,7 @@ export function TaskCard({ task, users }: TaskCardProps) {
                 </div>
               </div>
             ) : (
-              <div className="grid grid-cols-2 gap-2">
+              <div className="grid grid-cols-2 gap-2 mb-2">
                 {/* Status Select */}
                 <Select
                   value={editedTask.status}
@@ -363,6 +363,22 @@ export function TaskCard({ task, users }: TaskCardProps) {
                     ))}
                   </SelectContent>
                 </Select>
+              </div>
+              
+              {/* Due Date field */}
+              <div className="mb-2">
+                <label className="text-sm text-muted-foreground mb-1 block">Fecha de vencimiento</label>
+                <Input
+                  type="date"
+                  value={editedTask.dueDate instanceof Date 
+                    ? editedTask.dueDate.toISOString().split('T')[0] 
+                    : new Date(editedTask.dueDate).toISOString().split('T')[0]}
+                  onChange={(e) => setEditedTask(prev => ({ 
+                    ...prev, 
+                    dueDate: new Date(e.target.value) 
+                  }))}
+                  className="w-full"
+                />
               </div>
             )}
           </div>
