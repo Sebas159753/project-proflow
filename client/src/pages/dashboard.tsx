@@ -10,12 +10,20 @@ export default function Dashboard() {
     initialData: [], // Proporcionar un array vacío como valor inicial
   });
 
-  const { data: users, isLoading: usersLoading } = useQuery({
-    queryKey: ["users"],
-    initialData: [], // Proporcionar un array vacío como valor inicial
+  const { data: usersData, isLoading: isLoadingUsers } = useQuery({
+    queryKey: ['users'],
+    queryFn: async () => {
+      const response = await fetch('/api/users');
+      if (!response.ok) {
+        throw new Error('Network response was not ok');
+      }
+      const data = await response.json();
+      console.log("Datos de usuarios cargados:", data);
+      return data;
+    }
   });
 
-  if (tasksLoading || usersLoading) {
+  if (tasksLoading || isLoadingUsers) {
     return <div className="flex h-screen items-center justify-center">
       <div className="text-center">
         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500 mx-auto"></div>
@@ -28,9 +36,9 @@ export default function Dashboard() {
     <div className="flex h-screen bg-background">
       <Sidebar />
       <div className="flex-1 flex flex-col">
-        <Header users={users} />
+        <Header users={usersData} />
         <ScrollArea className="flex-1 p-6">
-          <KanbanBoard tasks={tasks} users={users} />
+          <KanbanBoard tasks={tasks} users={usersData} />
         </ScrollArea>
       </div>
     </div>
