@@ -12,7 +12,7 @@ import { TaskStatus, TaskPriority, type Task, type User } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
-import { useState, useEffect } from "react"; // Updated import
+import { useState } from "react";
 import { Calendar } from "@/components/ui/calendar";
 import {
   Select,
@@ -24,13 +24,24 @@ import {
 
 interface EditTaskDialogProps {
   task: Task;
-  users: User[] | undefined;
+  users: User[];
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }
 
-export function EditTaskDialog({ task, users = [], open, onOpenChange }: EditTaskDialogProps) {
-  const [editedTask, setEditedTask] = useState<Task>({ ...task });
+export function EditTaskDialog({ task, users, open, onOpenChange }: EditTaskDialogProps) {
+  const [editedTask, setEditedTask] = useState({
+    title: task.title,
+    description: task.description,
+    status: task.status,
+    priority: task.priority,
+    dueDate: new Date(task.dueDate),
+    assignedUserIds: task.assignedUserIds,
+    pomodoroCount: task.pomodoroCount,
+    pomodoroDuration: task.pomodoroDuration,
+    shortBreakDuration: task.shortBreakDuration,
+    longBreakDuration: task.longBreakDuration
+  });
 
   const [isSaving, setIsSaving] = useState(false); // Added state for saving indicator
 
@@ -46,7 +57,7 @@ export function EditTaskDialog({ task, users = [], open, onOpenChange }: EditTas
         ...editedTask,
         dueDate: editedTask.dueDate.toISOString()
       };
-
+      
       // Enviar al servidor
       await fetch(`/api/tasks/${task.id}`, {
         method: 'PATCH',
@@ -195,7 +206,7 @@ export function EditTaskDialog({ task, users = [], open, onOpenChange }: EditTas
             <label>Asignado a</label>
             <Select
               value={editedTask.assignedUserIds[0]?.toString()}
-              onValueChange={(value) => setEditedTask(prev => ({ ...prev, assignedUserIds: value ? [parseInt(value)] : [] }))}
+              onValueChange={(value) => setEditedTask(prev => ({ ...prev, assignedUserIds: [parseInt(value)] }))}
             >
               <SelectTrigger>
                 <SelectValue />

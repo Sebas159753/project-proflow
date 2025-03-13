@@ -23,26 +23,23 @@ const columns = [
   { id: TaskStatus.COMPLETED, title: "Completed", className: "bg-[#01579B]" }
 ];
 
-export function KanbanBoard({ tasks = [], users = [] }: KanbanBoardProps) {
+export function KanbanBoard({ tasks, users }: KanbanBoardProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
-  // Asegurar que tasks es un array
-  const tasksArray = Array.isArray(tasks) ? tasks : [];
-
   // Configurar Fuse.js para búsqueda difusa
-  const fuse = useMemo(() => new Fuse(tasksArray, {
+  const fuse = useMemo(() => new Fuse(tasks, {
     keys: ['title', 'description'],
     threshold: 0.4,
     shouldSort: true
-  }), [tasksArray]);
+  }), [tasks]);
 
   // Filtrar tareas basado en la búsqueda
   const filteredTasks = useMemo(() => {
-    if (!searchQuery) return tasksArray;
+    if (!searchQuery) return tasks;
     return fuse.search(searchQuery).map(result => result.item);
-  }, [searchQuery, tasksArray, fuse]);
+  }, [searchQuery, tasks, fuse]);
 
   const getTasksByStatus = (status: string) => {
     return filteredTasks.filter(task => task.status === status);
@@ -63,8 +60,13 @@ export function KanbanBoard({ tasks = [], users = [] }: KanbanBoardProps) {
         credentials: 'include'
       });
 
-      // Asegurar la actualización completa de la caché después de arrastrar
-      await queryClient.invalidateQueries({ queryKey: ["tasks"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/tasks"] });
+
+      toast({
+        title: "¡Tarea actualizada!",
+        description: `Tarea movida a ${columns.find(col => col.id === newStatus)?.title}`,
+        className: "bg-green-500 text-white"
+      });
     } catch (error) {
       console.error("Error al actualizar la tarea:", error);
       toast({

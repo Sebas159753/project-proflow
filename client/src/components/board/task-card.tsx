@@ -38,9 +38,9 @@ const getPriorityColor = (priority: string) => {
 
 const EMOJIS = ["🎉", "🎊", "✨", "🌟", "💫", "🎯"];
 
-export function TaskCard({ task, users = [] }: TaskCardProps) {
+export function TaskCard({ task, users }: TaskCardProps) {
   const [showPomodoro, setShowPomodoro] = useState(false);
-  const [progress, setProgress] = useState(task?.progress || 0);
+  const [progress, setProgress] = useState(task.progress);
   const [isUpdating, setIsUpdating] = useState(false);
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [showCelebration, setShowCelebration] = useState(false);
@@ -55,16 +55,9 @@ export function TaskCard({ task, users = [] }: TaskCardProps) {
     }
   }, [progress]);
 
-  // Asegurar que users es un array y task tiene assignedUserIds
-  const assignedUsers = Array.isArray(users) && Array.isArray(task?.assignedUserIds) && task?.assignedUserIds?.length > 0
-    ? users.filter(user => task.assignedUserIds.includes(user.id))
-    : [];
-    
-  // Información de depuración para identificar problemas
-  console.log("Task card - Users disponibles:", users);
-  console.log("Task card - ID de task:", task?.id);
-  console.log("Task card - Task assignedUserIds:", task?.assignedUserIds);
-  console.log("Task card - Assigned users:", assignedUsers);
+  const assignedUsers = users.filter(user =>
+    task.assignedUserIds.includes(user.id)
+  );
 
   const handleProgressChange = async (value: number[]) => {
     const progressValue = value[0];
@@ -209,9 +202,7 @@ export function TaskCard({ task, users = [] }: TaskCardProps) {
 
             <div className="flex items-center justify-between">
               <div className="text-sm text-muted-foreground">
-                {assignedUsers.length > 0 
-                  ? `Asignado a: ${assignedUsers.map(user => user.name).join(', ')}` 
-                  : "Sin asignar"}
+                Asignado a: {assignedUsers.map(user => user.name).join(', ')}
               </div>
               <div className="text-sm text-muted-foreground">
                 {format(new Date(task.dueDate), 'MMM d')}

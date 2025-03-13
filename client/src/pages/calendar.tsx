@@ -15,11 +15,11 @@ export default function CalendarPage() {
   const [showNewTask, setShowNewTask] = useState(false);
 
   const { data: tasks, isLoading: tasksLoading } = useQuery({
-    queryKey: ["tasks"],
+    queryKey: ["/api/tasks"],
   });
 
   const { data: users, isLoading: usersLoading } = useQuery({
-    queryKey: ["users"],
+    queryKey: ["/api/users"],
   });
 
   if (tasksLoading || usersLoading) {
