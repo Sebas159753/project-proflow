@@ -52,16 +52,22 @@ export function EditTaskDialog({ task, users, open, onOpenChange }: EditTaskDial
     setIsSaving(true);
 
     try {
-      // Actualizar el formato para que coincida con el esperado en el servidor
+      // Preparar los datos asegurando que la fecha esté en formato ISO
+      const taskData = {
+        ...editedTask,
+        dueDate: editedTask.dueDate.toISOString()
+      };
+      
+      // Enviar al servidor
       await fetch(`/api/tasks/${task.id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(editedTask),
+        body: JSON.stringify(taskData),
         credentials: 'include'
       });
 
       // Invalidar y refrescar la caché
-      await queryClient.invalidateQueries({ queryKey: ["/api/tasks"] });
+      await queryClient.invalidateQueries({ queryKey: ["tasks"] });
 
       toast({
         title: "¡Éxito!",

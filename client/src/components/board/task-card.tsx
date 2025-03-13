@@ -82,7 +82,7 @@ export function TaskCard({ task, users }: TaskCardProps) {
         awardPoints(10, 'Tarea completada');
       }
 
-      await queryClient.invalidateQueries(['tasks']);
+      await queryClient.invalidateQueries({ queryKey: ["tasks"] });
     } catch (error) {
       console.error("Error al actualizar el progreso:", error);
       toast({
@@ -98,7 +98,7 @@ export function TaskCard({ task, users }: TaskCardProps) {
   const handleDeleteTask = async () => {
     try {
       await apiRequest('DELETE', `/api/tasks/${task.id}`);
-      await queryClient.invalidateQueries(['tasks']);
+      await queryClient.invalidateQueries({ queryKey: ["tasks"] });
 
       toast({
         title: "Tarea eliminada",
