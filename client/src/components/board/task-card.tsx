@@ -13,6 +13,13 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Slider } from "@/components/ui/slider";
 import { usePoints } from "@/hooks/use-points";
 import { useWebSocket } from "@/hooks/use-websocket";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface TaskCardProps {
   task: Task;
@@ -38,6 +45,7 @@ const EMOJIS = ["🎉", "🎊", "✨", "🌟", "💫", "🎯"];
 
 export function TaskCard({ task, users }: TaskCardProps) {
   const [progress, setProgress] = useState(task.progress);
+  const [status, setStatus] = useState(task.status);
   const [isUpdating, setIsUpdating] = useState(false);
   const [showCelebration, setShowCelebration] = useState(false);
   const queryClient = useQueryClient();
@@ -56,6 +64,62 @@ export function TaskCard({ task, users }: TaskCardProps) {
     task.assignedUserIds.includes(user.id)
   );
 
+  const handleStatusChange = async (newStatus: string) => {
+    setIsUpdating(true);
+    try {
+      const response = await apiRequest(`/api/tasks/${task.id}`, {
+        method: 'PATCH',
+        body: {
+          status: newStatus,
+          progress: newStatus === TaskStatus.COMPLETED ? 100 : progress
+        }
+      });
+
+      const updatedTask = await response.json();
+      setStatus(newStatus);
+      if (newStatus === TaskStatus.COMPLETED) {
+        setProgress(100);
+      }
+
+      // Notificar a otros usuarios sobre el cambio
+      sendMessage({
+        type: 'TASK_UPDATE',
+        payload: updatedTask,
+        sender: {
+          id: task.assignedUserIds[0],
+          name: assignedUsers[0]?.name || 'Usuario'
+        },
+        timestamp: new Date().toISOString()
+      });
+
+      // Si la tarea se completó, otorgar puntos
+      if (newStatus === TaskStatus.COMPLETED) {
+        const userId = task.assignedUserIds[0];
+        if (userId) {
+          await awardPoints(task, userId);
+        }
+      }
+
+      await queryClient.invalidateQueries({ queryKey: ["/api/tasks"] });
+
+      toast({
+        title: "¡Éxito!",
+        description: "Estado actualizado correctamente",
+        className: "bg-green-500 text-white"
+      });
+    } catch (error) {
+      console.error('Error al actualizar estado:', error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "No se pudo actualizar el estado"
+      });
+      setStatus(task.status);
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
   const handleProgressChange = async (newValue: number[]) => {
     const progressValue = newValue[0];
     setIsUpdating(true);
@@ -65,7 +129,7 @@ export function TaskCard({ task, users }: TaskCardProps) {
         method: 'PATCH',
         body: {
           progress: progressValue,
-          status: progressValue === 100 ? TaskStatus.COMPLETED : task.status
+          status: progressValue === 100 ? TaskStatus.COMPLETED : status
         }
       });
 
@@ -83,8 +147,8 @@ export function TaskCard({ task, users }: TaskCardProps) {
         timestamp: new Date().toISOString()
       });
 
-      // Si la tarea se completó, otorgar puntos al usuario asignado
-      if (progressValue === 100 && task.status !== TaskStatus.COMPLETED) {
+      // Si el progreso llegó al 100%, otorgar puntos
+      if (progressValue === 100) {
         const userId = task.assignedUserIds[0];
         if (userId) {
           await awardPoints(task, userId);
@@ -170,6 +234,25 @@ export function TaskCard({ task, users }: TaskCardProps) {
 
           <div className="space-y-4">
             <div>
+              <div className="flex justify-between text-sm mb-1">
+                <span>Estado</span>
+                <Select
+                  value={status}
+                  onValueChange={handleStatusChange}
+                  disabled={isUpdating}
+                >
+                  <SelectTrigger className="w-[140px]">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {Object.values(TaskStatus).map((statusOption) => (
+                      <SelectItem key={statusOption} value={statusOption}>
+                        {statusOption}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
               <div className="flex justify-between text-sm mb-1">
                 <span>Progreso</span>
                 <span>{progress}%</span>
