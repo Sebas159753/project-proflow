@@ -69,16 +69,18 @@ export function PostItPanel({ currentUser }: PostItPanelProps) {
       timestamp: new Date().toISOString()
     };
 
+    const updatedNotes = [...notes, note];
+
     // Enviar la nota a través de WebSocket
     sendMessage({
       type: 'NOTE_UPDATE',
-      payload: [...notes, note],
+      payload: updatedNotes,
       sender: { id: currentUser.id, name: currentUser.name },
       timestamp: note.timestamp
     });
 
     // Actualizar la UI localmente
-    setNotes(prev => [...prev, note]);
+    setNotes(updatedNotes);
     setNewNote('');
   };
 
