@@ -23,7 +23,14 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
       <Card className="w-full max-w-md">
-        <CardHeader>
+        <CardHeader className="space-y-4">
+          <div className="flex justify-center">
+            <img 
+              src="/attached_assets/Logo BVQ Color.png" 
+              alt="BVQ Logo"
+              className="h-20 object-contain mb-4"
+            />
+          </div>
           <CardTitle className="text-2xl text-center">Bienvenido</CardTitle>
           <CardDescription className="text-center">
             Selecciona tu usuario para comenzar
