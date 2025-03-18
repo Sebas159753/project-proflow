@@ -28,18 +28,33 @@ export function NewTaskDialog({ open, onOpenChange, users }: NewTaskDialogProps)
       title: "",
       description: "",
       status: TaskStatus.TODO,
+      priority: TaskPriority.LOW,
       progress: 0,
       dueDate: new Date().toISOString().split('T')[0],
       assignedUserIds: [],
-      priority: TaskPriority.NORMAL // Added default value for priority
+      pomodoroCount: 4,
+      pomodoroDuration: 25,
+      shortBreakDuration: 5,
+      longBreakDuration: 15
     }
   });
 
   async function onSubmit(data: any) {
     try {
-      await apiRequest("POST", "/api/tasks", data);
+      const response = await apiRequest('/api/tasks', {
+        method: 'POST',
+        body: data
+      });
 
-      queryClient.invalidateQueries({ queryKey: ["/api/tasks"] });
+      const newTask = await response.json();
+
+      // Actualizar la caché de react-query
+      queryClient.setQueryData(['/api/tasks'], (oldData: any) => {
+        return oldData ? [...oldData, newTask] : [newTask];
+      });
+
+      // Invalidar la consulta para asegurarnos de tener los datos más recientes
+      await queryClient.invalidateQueries({ queryKey: ['/api/tasks'] });
 
       toast({
         title: "¡Éxito!",
@@ -61,10 +76,10 @@ export function NewTaskDialog({ open, onOpenChange, users }: NewTaskDialogProps)
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[425px]" aria-describedby="task-form-description">
+      <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
           <DialogTitle>Nueva Tarea</DialogTitle>
-          <DialogDescription id="task-form-description">
+          <DialogDescription>
             Ingresa los detalles de la nueva tarea
           </DialogDescription>
         </DialogHeader>
@@ -97,31 +112,6 @@ export function NewTaskDialog({ open, onOpenChange, users }: NewTaskDialogProps)
                       {...field}
                     />
                   </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="status"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Estado</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Selecciona el estado" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {Object.values(TaskStatus).map((status) => (
-                        <SelectItem key={status} value={status}>
-                          {status}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
                   <FormMessage />
                 </FormItem>
               )}
