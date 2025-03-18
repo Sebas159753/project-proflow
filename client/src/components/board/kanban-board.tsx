@@ -9,6 +9,7 @@ import { useState, useMemo } from "react";
 import { Input } from "@/components/ui/input";
 import { Search } from "lucide-react";
 import Fuse from 'fuse.js';
+import { useWebSocket } from "@/hooks/use-websocket";
 
 interface KanbanBoardProps {
   tasks: Task[];
@@ -27,6 +28,7 @@ export function KanbanBoard({ tasks, users }: KanbanBoardProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const queryClient = useQueryClient();
   const { toast } = useToast();
+  const { sendMessage } = useWebSocket();
 
   // Configurar Fuse.js para búsqueda difusa
   const fuse = useMemo(() => new Fuse(tasks, {
@@ -53,10 +55,31 @@ export function KanbanBoard({ tasks, users }: KanbanBoardProps) {
     const newStatus = destination.droppableId;
 
     try {
-      await apiRequest("PATCH", `/api/tasks/${taskId}`, {
-        status: newStatus
+      const response = await apiRequest(`/api/tasks/${taskId}`, {
+        method: 'PATCH',
+        body: {
+          status: newStatus,
+          progress: newStatus === TaskStatus.COMPLETED ? 100 : 0
+        }
       });
 
+      const updatedTask = await response.json();
+
+      // Notificar a otros usuarios del cambio
+      const task = tasks.find(t => t.id === taskId);
+      if (task) {
+        sendMessage({
+          type: 'TASK_UPDATE',
+          payload: updatedTask,
+          sender: {
+            id: task.assignedUserIds[0],
+            name: users.find(u => u.id === task.assignedUserIds[0])?.name || 'Usuario'
+          },
+          timestamp: new Date().toISOString()
+        });
+      }
+
+      // Actualizar la caché local
       queryClient.invalidateQueries({ queryKey: ["/api/tasks"] });
 
       toast({
