@@ -8,7 +8,23 @@ import { useQuery } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { NewTaskDialog } from "@/components/dialogs/new-task-dialog";
-import type { Task, User } from "@shared/schema";
+import { Badge } from "@/components/ui/badge";
+import type { Task, User, TaskPriority } from "@shared/schema";
+
+const getPriorityColor = (priority: string) => {
+  switch (priority) {
+    case TaskPriority.URGENT:
+      return "bg-red-100 text-red-800 hover:bg-red-100/80";
+    case TaskPriority.HIGH:
+      return "bg-orange-100 text-orange-800 hover:bg-orange-100/80";
+    case TaskPriority.MEDIUM:
+      return "bg-yellow-100 text-yellow-800 hover:bg-yellow-100/80";
+    case TaskPriority.LOW:
+      return "bg-green-100 text-green-800 hover:bg-green-100/80";
+    default:
+      return "";
+  }
+};
 
 export default function CalendarPage() {
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
@@ -85,24 +101,19 @@ export default function CalendarPage() {
                 tasksForDate(selectedDate).map((task: Task) => (
                   <Card key={task.id}>
                     <CardContent className="p-4">
-                      <h3 className="font-semibold">{task.title}</h3>
+                      <div className="flex items-center justify-between">
+                        <h3 className="font-semibold">{task.title}</h3>
+                        <Badge className={getPriorityColor(task.priority)}>
+                          {task.priority}
+                        </Badge>
+                      </div>
                       <p className="text-sm text-muted-foreground mt-1">
                         {task.description}
                       </p>
-                      <div className="flex items-center mt-4">
-                        <div className="flex -space-x-2">
-                          {task.assignedUserIds.map((userId) => {
-                            const user = users.find((u: User) => u.id === userId);
-                            return user ? (
-                              <img
-                                key={user.id}
-                                src={user.avatar}
-                                alt={user.name}
-                                className="w-8 h-8 rounded-full border-2 border-background"
-                              />
-                            ) : null;
-                          })}
-                        </div>
+                      <div className="mt-2">
+                        <span className="text-sm text-muted-foreground">
+                          Asignado a: {users.find((u: User) => task.assignedUserIds.includes(u.id))?.name}
+                        </span>
                       </div>
                     </CardContent>
                   </Card>
