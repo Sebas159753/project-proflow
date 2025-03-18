@@ -26,7 +26,9 @@ function App() {
     id: 1,
     name: "Usuario de prueba",
     points: 0,
-    level: "NOVICE" as const
+    level: "NOVICE" as const,
+    taskStreak: 0,
+    lastTaskCompletionDate: null
   };
 
   return (

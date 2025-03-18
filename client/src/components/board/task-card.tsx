@@ -14,6 +14,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Slider } from "@/components/ui/slider";
 import { EditTaskDialog } from "../dialogs/edit-task-dialog";
 import { usePoints } from "@/hooks/use-points";
+import { useWebSocket } from "@/hooks/use-websocket";
 
 interface TaskCardProps {
   task: Task;
@@ -46,6 +47,7 @@ export function TaskCard({ task, users }: TaskCardProps) {
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const { awardPoints } = usePoints();
+  const { sendMessage } = useWebSocket();
 
   useEffect(() => {
     if (progress === 100 && !showCelebration) {
@@ -64,7 +66,7 @@ export function TaskCard({ task, users }: TaskCardProps) {
     setIsUpdating(true);
 
     try {
-      await apiRequest(`/api/tasks/${task.id}`, {
+      const updatedTask = await apiRequest(`/api/tasks/${task.id}`, {
         method: 'PATCH',
         body: {
           progress: progressValue,
@@ -72,9 +74,17 @@ export function TaskCard({ task, users }: TaskCardProps) {
         }
       });
 
+      // Notificar a otros usuarios sobre el cambio
+      sendMessage({
+        type: 'TASK_UPDATE',
+        payload: updatedTask,
+        sender: { id: task.assignedUserIds[0], name: assignedUsers[0]?.name || 'Usuario' },
+        timestamp: new Date().toISOString()
+      });
+
       // Si la tarea se completó, otorgar puntos al usuario asignado
       if (progressValue === 100 && task.status !== TaskStatus.COMPLETED) {
-        const userId = task.assignedUserIds[0]; // Por ahora usamos el primer usuario asignado
+        const userId = task.assignedUserIds[0];
         if (userId) {
           await awardPoints(task, userId);
         }
@@ -93,7 +103,7 @@ export function TaskCard({ task, users }: TaskCardProps) {
         title: "Error",
         description: "No se pudo actualizar el progreso"
       });
-      setProgress(task.progress); // Revertir al valor original si hay error
+      setProgress(task.progress);
     } finally {
       setIsUpdating(false);
     }
@@ -103,7 +113,7 @@ export function TaskCard({ task, users }: TaskCardProps) {
     try {
       await apiRequest(`/api/tasks/${task.id}`, {
         method: 'DELETE',
-        body: {} // Añadimos un cuerpo vacío para asegurar que la llamada se procese correctamente
+        body: {} 
       });
 
       await queryClient.invalidateQueries({ queryKey: ["/api/tasks"] });

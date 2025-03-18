@@ -11,7 +11,7 @@ export function useWebSocket(userId: number, userName: string) {
   const connect = useCallback(() => {
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
     const wsUrl = `${protocol}//${window.location.host}/ws`;
-    
+
     socket.current = new WebSocket(wsUrl);
 
     socket.current.onopen = () => {
@@ -38,7 +38,7 @@ export function useWebSocket(userId: number, userName: string) {
           });
           break;
         case 'CHAT_MESSAGE':
-          // Manejar mensajes de chat (se implementará después)
+          // Manejar mensajes de chat
           break;
       }
     };
