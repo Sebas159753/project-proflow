@@ -23,18 +23,22 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
       <Card className="w-full max-w-md">
-        <CardHeader className="space-y-4">
-          <div className="flex justify-center">
-            <img 
-              src="/attached_assets/Logo BVQ Color.png" 
-              alt="BVQ Logo"
-              className="h-20 object-contain mb-4"
-            />
+        <CardHeader className="space-y-6 pt-6">
+          <div className="flex justify-center w-full">
+            <div className="w-64 h-24 relative flex items-center justify-center">
+              <img 
+                src="/attached_assets/Logo BVQ Color.png" 
+                alt="BVQ Logo"
+                className="max-w-full max-h-full w-auto h-auto object-contain"
+              />
+            </div>
           </div>
-          <CardTitle className="text-2xl text-center">Bienvenido</CardTitle>
-          <CardDescription className="text-center">
-            Selecciona tu usuario para comenzar
-          </CardDescription>
+          <div className="space-y-2">
+            <CardTitle className="text-2xl text-center">Bienvenido</CardTitle>
+            <CardDescription className="text-center">
+              Selecciona tu usuario para comenzar
+            </CardDescription>
+          </div>
         </CardHeader>
         <CardContent>
           <div className="space-y-2">
