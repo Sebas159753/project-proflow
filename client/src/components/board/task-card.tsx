@@ -61,7 +61,6 @@ export function TaskCard({ task, users }: TaskCardProps) {
     setIsUpdating(true);
 
     try {
-      // Actualizar la tarea
       const response = await apiRequest(`/api/tasks/${task.id}`, {
         method: 'PATCH',
         body: {
@@ -70,16 +69,13 @@ export function TaskCard({ task, users }: TaskCardProps) {
         }
       });
 
-      if (!response) {
-        throw new Error('No se recibió respuesta del servidor');
-      }
-
+      const updatedTask = await response.json();
       setProgress(progressValue);
 
       // Notificar a otros usuarios sobre el cambio
       sendMessage({
         type: 'TASK_UPDATE',
-        payload: response,
+        payload: updatedTask,
         sender: { 
           id: task.assignedUserIds[0], 
           name: assignedUsers[0]?.name || 'Usuario' 
