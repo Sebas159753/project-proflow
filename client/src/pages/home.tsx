@@ -30,6 +30,7 @@ export default function Home() {
                 src="/attached_assets/Powerby INFOLAB.PNG" 
                 alt="Infolab Logo"
                 className="w-full h-full object-contain"
+                style={{ imageRendering: 'auto' }}
               />
             </div>
           </div>
