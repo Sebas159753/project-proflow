@@ -31,18 +31,30 @@ export function PostItPanel({ currentUser }: PostItPanelProps) {
   useEffect(() => {
     // Función para manejar mensajes recibidos
     const handleMessage = (event: MessageEvent) => {
-      const data = JSON.parse(event.data);
-      if (data.type === 'NOTE_UPDATE') {
-        setNotes(data.payload);
+      try {
+        const data = JSON.parse(event.data);
+        console.log('Mensaje recibido en PostItPanel:', data.type, data);
+
+        switch (data.type) {
+          case 'NOTE_UPDATE':
+            console.log('Actualizando notas con:', data.payload);
+            setNotes(data.payload || []);
+            break;
+          case 'PING':
+            console.log('Ping recibido del servidor');
+            break;
+        }
+      } catch (error) {
+        console.error('Error procesando mensaje:', error);
       }
     };
 
     if (socket.current) {
-      // Add message event listener
       socket.current.addEventListener('message', handleMessage);
 
-      // Send initial connection message
+      // Solicitar notas existentes al conectar
       if (socket.current.readyState === WebSocket.OPEN) {
+        console.log('Solicitando notas existentes');
         socket.current.send(JSON.stringify({
           type: 'USER_CONNECTED',
           sender: { id: currentUser.id, name: currentUser.name },
@@ -59,7 +71,6 @@ export function PostItPanel({ currentUser }: PostItPanelProps) {
   }, [socket, currentUser]);
 
   useEffect(() => {
-    // Scroll a la última nota
     if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
@@ -79,51 +90,42 @@ export function PostItPanel({ currentUser }: PostItPanelProps) {
       timestamp: new Date().toISOString()
     };
 
-    const updatedNotes = [...notes, note];
+    console.log('Enviando actualización de notas:', [...notes, note]);
 
-    // Enviar la nota a través de WebSocket
     sendMessage({
       type: 'NOTE_UPDATE',
-      payload: updatedNotes,
+      payload: [...notes, note],
       sender: { id: currentUser.id, name: currentUser.name },
       timestamp: note.timestamp
     });
 
-    // Actualizar la UI localmente
-    setNotes(updatedNotes);
     setNewNote('');
   };
 
   const handleDeleteNote = (noteId: string) => {
     const updatedNotes = notes.filter(note => note.id !== noteId);
+    console.log('Enviando actualización después de eliminar:', updatedNotes);
 
-    // Enviar actualización a través de WebSocket
     sendMessage({
       type: 'NOTE_UPDATE',
       payload: updatedNotes,
       sender: { id: currentUser.id, name: currentUser.name },
       timestamp: new Date().toISOString()
     });
-
-    // Actualizar la UI localmente
-    setNotes(updatedNotes);
   };
 
   const handleToggleComplete = (noteId: string) => {
     const updatedNotes = notes.map(note => 
       note.id === noteId ? { ...note, completed: !note.completed } : note
     );
+    console.log('Enviando actualización después de toggle:', updatedNotes);
 
-    // Enviar actualización a través de WebSocket
     sendMessage({
       type: 'NOTE_UPDATE',
       payload: updatedNotes,
       sender: { id: currentUser.id, name: currentUser.name },
       timestamp: new Date().toISOString()
     });
-
-    // Actualizar la UI localmente
-    setNotes(updatedNotes);
   };
 
   return (
