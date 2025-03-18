@@ -23,23 +23,11 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
       <Card className="w-full max-w-md">
-        <CardHeader className="space-y-6 pt-6">
-          <div className="flex justify-center w-full">
-            <div className="w-48 h-20 flex items-center justify-center">
-              <img 
-                src="/attached_assets/Powerby INFOLAB.PNG" 
-                alt="Infolab Logo"
-                className="w-full h-full object-contain"
-                style={{ imageRendering: 'auto' }}
-              />
-            </div>
-          </div>
-          <div className="space-y-2">
-            <CardTitle className="text-2xl text-center">Bienvenido</CardTitle>
-            <CardDescription className="text-center">
-              Selecciona tu usuario para comenzar
-            </CardDescription>
-          </div>
+        <CardHeader>
+          <CardTitle className="text-2xl text-center">Bienvenido</CardTitle>
+          <CardDescription className="text-center">
+            Selecciona tu usuario para comenzar
+          </CardDescription>
         </CardHeader>
         <CardContent>
           <div className="space-y-2">

@@ -43,6 +43,7 @@ export default function People() {
         name: newPerson.name,
       });
 
+      // Invalidar la caché y esperar a que se actualice
       await queryClient.invalidateQueries({ queryKey: ["/api/users"] });
       await queryClient.refetchQueries({ queryKey: ["/api/users"] });
 
@@ -71,6 +72,7 @@ export default function People() {
         name: editingPerson.name,
       });
 
+      // Invalidar la caché y forzar una actualización inmediata
       await queryClient.invalidateQueries({ queryKey: ["/api/users"] });
       await queryClient.refetchQueries({ queryKey: ["/api/users"] });
 
@@ -96,21 +98,12 @@ export default function People() {
     <div className="flex h-screen bg-background">
       <Sidebar />
       <div className="flex-1 p-8">
-        <div className="flex flex-col gap-6 mb-6">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <img 
-                src="/attached_assets/Logo BVQ Color.png" 
-                alt="BVQ Logo"
-                className="h-12 object-contain"
-              />
-              <h1 className="text-2xl font-bold">Gestión de Personas</h1>
-            </div>
-            <Button onClick={() => setShowAddPerson(true)} className="bg-blue-600 hover:bg-blue-700 text-white">
-              <Plus className="h-4 w-4 mr-2" />
-              Agregar Persona
-            </Button>
-          </div>
+        <div className="flex justify-between items-center mb-6">
+          <h1 className="text-2xl font-bold">Gestión de Personas</h1>
+          <Button onClick={() => setShowAddPerson(true)} className="bg-blue-600 hover:bg-blue-700 text-white">
+            <Plus className="h-4 w-4 mr-2" />
+            Agregar Persona
+          </Button>
         </div>
 
         <AnimatePresence mode="wait">
@@ -163,6 +156,7 @@ export default function People() {
           )}
         </AnimatePresence>
 
+        {/* Diálogo para agregar persona */}
         <Dialog open={showAddPerson} onOpenChange={setShowAddPerson}>
           <DialogContent>
             <DialogHeader>
@@ -192,6 +186,7 @@ export default function People() {
           </DialogContent>
         </Dialog>
 
+        {/* Diálogo para editar persona */}
         <Dialog open={showEditPerson} onOpenChange={setShowEditPerson}>
           <DialogContent>
             <DialogHeader>
