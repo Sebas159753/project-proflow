@@ -6,7 +6,7 @@ import Dashboard from "@/pages/dashboard";
 import Reporting from "@/pages/reporting";
 import People from "@/pages/people";
 import Calendar from "@/pages/calendar";
-import { ChatPanel } from "@/components/chat/chat-panel";
+import { PostItPanel } from "@/components/chat/chat-panel";
 import Home from "@/pages/home";
 import { useQuery } from "@tanstack/react-query";
 import { useEffect } from "react";
@@ -42,7 +42,7 @@ function AppContent() {
               <Route path="/calendar" component={Calendar} />
             </Switch>
           </div>
-          <ChatPanel currentUser={currentUser} />
+          <PostItPanel currentUser={currentUser} />
         </div>
       )}
       {(location === "/" || !currentUser) && (

@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { Send } from 'lucide-react';
+import { Plus, Trash2, Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -7,23 +7,24 @@ import { Card } from '@/components/ui/card';
 import type { User } from '@shared/schema';
 import { useWebSocket } from '@/hooks/use-websocket';
 
-interface ChatMessage {
+interface PostIt {
   id: string;
   text: string;
-  sender: {
+  completed: boolean;
+  creator: {
     id: number;
     name: string;
   };
   timestamp: string;
 }
 
-interface ChatPanelProps {
+interface PostItPanelProps {
   currentUser: User;
 }
 
-export function ChatPanel({ currentUser }: ChatPanelProps) {
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
-  const [newMessage, setNewMessage] = useState('');
+export function PostItPanel({ currentUser }: PostItPanelProps) {
+  const [notes, setNotes] = useState<PostIt[]>([]);
+  const [newNote, setNewNote] = useState('');
   const scrollRef = useRef<HTMLDivElement>(null);
   const { sendMessage, socket } = useWebSocket(currentUser.id, currentUser.name);
 
@@ -31,8 +32,8 @@ export function ChatPanel({ currentUser }: ChatPanelProps) {
     // Función para manejar mensajes recibidos
     const handleMessage = (event: MessageEvent) => {
       const data = JSON.parse(event.data);
-      if (data.type === 'CHAT_MESSAGE') {
-        setMessages(prev => [...prev, data.payload]);
+      if (data.type === 'NOTE_UPDATE') {
+        setNotes(data.payload);
       }
     };
 
@@ -48,66 +49,115 @@ export function ChatPanel({ currentUser }: ChatPanelProps) {
   }, [socket]);
 
   useEffect(() => {
-    // Scroll al último mensaje
+    // Scroll a la última nota
     if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
-  }, [messages]);
+  }, [notes]);
 
-  const handleSendMessage = () => {
-    if (!newMessage.trim()) return;
+  const handleAddNote = () => {
+    if (!newNote.trim()) return;
 
-    const message: ChatMessage = {
+    const note: PostIt = {
       id: crypto.randomUUID(),
-      text: newMessage,
-      sender: {
+      text: newNote,
+      completed: false,
+      creator: {
         id: currentUser.id,
         name: currentUser.name
       },
       timestamp: new Date().toISOString()
     };
 
-    // Enviar el mensaje a través de WebSocket
+    // Enviar la nota a través de WebSocket
     sendMessage({
-      type: 'CHAT_MESSAGE',
-      payload: message,
+      type: 'NOTE_UPDATE',
+      payload: [...notes, note],
       sender: { id: currentUser.id, name: currentUser.name },
-      timestamp: message.timestamp
+      timestamp: note.timestamp
     });
 
     // Actualizar la UI localmente
-    setMessages(prev => [...prev, message]);
-    setNewMessage('');
+    setNotes(prev => [...prev, note]);
+    setNewNote('');
+  };
+
+  const handleDeleteNote = (noteId: string) => {
+    const updatedNotes = notes.filter(note => note.id !== noteId);
+
+    // Enviar actualización a través de WebSocket
+    sendMessage({
+      type: 'NOTE_UPDATE',
+      payload: updatedNotes,
+      sender: { id: currentUser.id, name: currentUser.name },
+      timestamp: new Date().toISOString()
+    });
+
+    // Actualizar la UI localmente
+    setNotes(updatedNotes);
+  };
+
+  const handleToggleComplete = (noteId: string) => {
+    const updatedNotes = notes.map(note => 
+      note.id === noteId ? { ...note, completed: !note.completed } : note
+    );
+
+    // Enviar actualización a través de WebSocket
+    sendMessage({
+      type: 'NOTE_UPDATE',
+      payload: updatedNotes,
+      sender: { id: currentUser.id, name: currentUser.name },
+      timestamp: new Date().toISOString()
+    });
+
+    // Actualizar la UI localmente
+    setNotes(updatedNotes);
   };
 
   return (
     <Card className="w-80 h-[calc(100vh-4rem)] flex flex-col">
       <div className="p-4 border-b">
-        <h2 className="text-lg font-semibold">Chat de Equipo</h2>
+        <h2 className="text-lg font-semibold">Panel de Notas</h2>
       </div>
 
       <ScrollArea ref={scrollRef} className="flex-1 p-4">
         <div className="space-y-4">
-          {messages.map((message) => (
+          {notes.map((note) => (
             <div
-              key={message.id}
-              className={`flex flex-col ${
-                message.sender.id === currentUser.id ? 'items-end' : 'items-start'
-              }`}
+              key={note.id}
+              className="relative group"
             >
-              <div
-                className={`max-w-[80%] rounded-lg p-3 ${
-                  message.sender.id === currentUser.id
-                    ? 'bg-blue-500 text-white'
-                    : 'bg-gray-100'
+              <Card
+                className={`p-3 transition-all ${
+                  note.completed ? 'bg-gray-100 text-gray-500' : 'bg-yellow-50'
                 }`}
               >
-                <p className="text-sm font-medium mb-1">{message.sender.name}</p>
-                <p className="text-sm">{message.text}</p>
-              </div>
-              <span className="text-xs text-gray-500 mt-1">
-                {new Date(message.timestamp).toLocaleTimeString()}
-              </span>
+                <div className="flex justify-between items-start mb-2">
+                  <p className="text-sm font-medium">{note.creator.name}</p>
+                  <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-6 w-6"
+                      onClick={() => handleToggleComplete(note.id)}
+                    >
+                      <Check className={`h-4 w-4 ${note.completed ? 'text-green-500' : 'text-gray-400'}`} />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-6 w-6 text-red-500 hover:text-red-700"
+                      onClick={() => handleDeleteNote(note.id)}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+                <p className={`text-sm ${note.completed ? 'line-through' : ''}`}>{note.text}</p>
+                <span className="text-xs text-gray-500 mt-2 block">
+                  {new Date(note.timestamp).toLocaleTimeString()}
+                </span>
+              </Card>
             </div>
           ))}
         </div>
@@ -117,18 +167,18 @@ export function ChatPanel({ currentUser }: ChatPanelProps) {
         <form
           onSubmit={(e) => {
             e.preventDefault();
-            handleSendMessage();
+            handleAddNote();
           }}
           className="flex gap-2"
         >
           <Input
-            value={newMessage}
-            onChange={(e) => setNewMessage(e.target.value)}
-            placeholder="Escribe un mensaje..."
+            value={newNote}
+            onChange={(e) => setNewNote(e.target.value)}
+            placeholder="Escribe una nota..."
             className="flex-1"
           />
           <Button type="submit" size="icon">
-            <Send className="h-4 w-4" />
+            <Plus className="h-4 w-4" />
           </Button>
         </form>
       </div>
