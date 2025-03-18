@@ -38,7 +38,17 @@ export function PostItPanel({ currentUser }: PostItPanelProps) {
     };
 
     if (socket.current) {
+      // Add message event listener
       socket.current.addEventListener('message', handleMessage);
+
+      // Send initial connection message
+      if (socket.current.readyState === WebSocket.OPEN) {
+        socket.current.send(JSON.stringify({
+          type: 'USER_CONNECTED',
+          sender: { id: currentUser.id, name: currentUser.name },
+          timestamp: new Date().toISOString()
+        }));
+      }
     }
 
     return () => {
@@ -46,7 +56,7 @@ export function PostItPanel({ currentUser }: PostItPanelProps) {
         socket.current.removeEventListener('message', handleMessage);
       }
     };
-  }, [socket]);
+  }, [socket, currentUser]);
 
   useEffect(() => {
     // Scroll a la última nota

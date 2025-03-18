@@ -3,6 +3,7 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { insertTaskSchema, insertPomodoroSessionSchema, insertBadgeSchema } from "@shared/schema";
 import { z } from "zod";
+import WebSocketHandler from "./websocket";
 
 const insertUserSchema = z.object({
   name: z.string().min(1, "El nombre es requerido")
@@ -96,7 +97,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Nuevo endpoint para actualizar usuarios
   app.patch("/api/users/:id", async (req, res) => {
     const id = parseInt(req.params.id);
     if (isNaN(id)) {
@@ -123,7 +123,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Nuevos endpoints para badges
   app.get("/api/users/:userId/badges", async (req, res) => {
     const userId = parseInt(req.params.userId);
     if (isNaN(userId)) {
@@ -163,7 +162,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Rutas para pomodoro sessions
   app.get("/api/pomodoro-sessions", async (_req, res) => {
     const sessions = await storage.getPomodoroSessions();
     res.json(sessions);
@@ -192,5 +190,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   const httpServer = createServer(app);
+
+  new WebSocketHandler(httpServer);
+
   return httpServer;
 }
