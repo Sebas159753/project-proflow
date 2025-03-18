@@ -40,7 +40,8 @@ export function EditTaskDialog({ task, users, open, onOpenChange }: EditTaskDial
     pomodoroCount: task.pomodoroCount,
     pomodoroDuration: task.pomodoroDuration,
     shortBreakDuration: task.shortBreakDuration,
-    longBreakDuration: task.longBreakDuration
+    longBreakDuration: task.longBreakDuration,
+    progress: task.progress // Added progress to the state
   });
 
   const { toast } = useToast();
@@ -48,7 +49,7 @@ export function EditTaskDialog({ task, users, open, onOpenChange }: EditTaskDial
 
   const handleSave = async () => {
     try {
-      await apiRequest(`/api/tasks/${task.id}`, {
+      const response = await apiRequest(`/api/tasks/${task.id}`, {
         method: 'PATCH',
         body: {
           ...editedTask,
@@ -56,9 +57,12 @@ export function EditTaskDialog({ task, users, open, onOpenChange }: EditTaskDial
         }
       });
 
+      if (!response) {
+        throw new Error('No se recibió respuesta del servidor');
+      }
+
       // Invalidar y refrescar la caché
       await queryClient.invalidateQueries({ queryKey: ["/api/tasks"] });
-      await queryClient.refetchQueries({ queryKey: ["/api/tasks"] });
 
       toast({
         title: "¡Éxito!",
@@ -68,6 +72,7 @@ export function EditTaskDialog({ task, users, open, onOpenChange }: EditTaskDial
 
       onOpenChange(false);
     } catch (error) {
+      console.error('Error al actualizar tarea:', error);
       toast({
         variant: "destructive",
         title: "Error",
