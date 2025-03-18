@@ -58,23 +58,27 @@ export function TaskCard({ task, users }: TaskCardProps) {
 
   const handleProgressChange = async (newValue: number[]) => {
     const progressValue = newValue[0];
-    setProgress(progressValue);
     setIsUpdating(true);
 
     try {
-      const updatedTask = await apiRequest(`/api/tasks/${task.id}`, {
+      const updatedTask = await apiRequest('/api/tasks/' + task.id, {
         method: 'PATCH',
-        body: {
+        body: JSON.stringify({
           progress: progressValue,
           status: progressValue === 100 ? TaskStatus.COMPLETED : task.status
-        }
+        })
       });
+
+      setProgress(progressValue);
 
       // Notificar a otros usuarios sobre el cambio
       sendMessage({
         type: 'TASK_UPDATE',
         payload: updatedTask,
-        sender: { id: task.assignedUserIds[0], name: assignedUsers[0]?.name || 'Usuario' },
+        sender: { 
+          id: task.assignedUserIds[0], 
+          name: assignedUsers[0]?.name || 'Usuario' 
+        },
         timestamp: new Date().toISOString()
       });
 
@@ -94,6 +98,7 @@ export function TaskCard({ task, users }: TaskCardProps) {
         className: "bg-green-500 text-white"
       });
     } catch (error) {
+      console.error('Error al actualizar progreso:', error);
       toast({
         variant: "destructive",
         title: "Error",
@@ -107,9 +112,9 @@ export function TaskCard({ task, users }: TaskCardProps) {
 
   const handleDelete = async () => {
     try {
-      await apiRequest(`/api/tasks/${task.id}`, {
+      await apiRequest('/api/tasks/' + task.id, {
         method: 'DELETE',
-        body: {}
+        body: JSON.stringify({})
       });
 
       await queryClient.invalidateQueries({ queryKey: ["/api/tasks"] });
@@ -172,7 +177,7 @@ export function TaskCard({ task, users }: TaskCardProps) {
               <div className="space-y-2">
                 <Progress value={progress} className="transition-all duration-500" />
                 <Slider
-                  defaultValue={[progress]}
+                  value={[progress]}
                   max={100}
                   step={25}
                   className="cursor-pointer"
