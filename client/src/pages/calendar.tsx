@@ -13,13 +13,13 @@ import { TaskPriority, type Task, type User } from "@shared/schema";
 
 const getPriorityColor = (priority: string) => {
   switch (priority) {
-    case TaskPriority.URGENT:
+    case "Urgente":
       return "bg-red-100 text-red-800 hover:bg-red-100/80";
-    case TaskPriority.HIGH:
+    case "Alta":
       return "bg-orange-100 text-orange-800 hover:bg-orange-100/80";
-    case TaskPriority.MEDIUM:
+    case "Media":
       return "bg-yellow-100 text-yellow-800 hover:bg-yellow-100/80";
-    case TaskPriority.LOW:
+    case "Baja":
       return "bg-green-100 text-green-800 hover:bg-green-100/80";
     default:
       return "";
