@@ -62,9 +62,8 @@ export function TaskCard({ task, users }: TaskCardProps) {
 
     try {
       // Actualizar la tarea
-      const response = await apiRequest('/api/tasks', {
+      const response = await apiRequest(`/api/tasks/${task.id}`, {
         method: 'PATCH',
-        url: `/api/tasks/${task.id}`,
         body: {
           progress: progressValue,
           status: progressValue === 100 ? TaskStatus.COMPLETED : task.status
@@ -118,9 +117,8 @@ export function TaskCard({ task, users }: TaskCardProps) {
 
   const handleDelete = async () => {
     try {
-      await apiRequest('/api/tasks', {
-        method: 'DELETE',
-        url: `/api/tasks/${task.id}`
+      await apiRequest(`/api/tasks/${task.id}`, {
+        method: 'DELETE'
       });
 
       await queryClient.invalidateQueries({ queryKey: ["/api/tasks"] });
