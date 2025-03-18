@@ -30,9 +30,9 @@ export function ChatPanel({ currentUser }: ChatPanelProps) {
   useEffect(() => {
     // Función para manejar mensajes recibidos
     const handleMessage = (event: MessageEvent) => {
-      const message = JSON.parse(event.data);
-      if (message.type === 'CHAT_MESSAGE') {
-        setMessages(prev => [...prev, message.payload]);
+      const data = JSON.parse(event.data);
+      if (data.type === 'CHAT_MESSAGE') {
+        setMessages(prev => [...prev, data.payload]);
       }
     };
 
@@ -67,6 +67,7 @@ export function ChatPanel({ currentUser }: ChatPanelProps) {
       timestamp: new Date().toISOString()
     };
 
+    // Enviar el mensaje a través de WebSocket
     sendMessage({
       type: 'CHAT_MESSAGE',
       payload: message,
@@ -74,6 +75,7 @@ export function ChatPanel({ currentUser }: ChatPanelProps) {
       timestamp: message.timestamp
     });
 
+    // Actualizar la UI localmente
     setMessages(prev => [...prev, message]);
     setNewMessage('');
   };

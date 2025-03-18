@@ -14,7 +14,10 @@ interface HeaderProps {
 
 export function Header({ users }: HeaderProps) {
   const [showNewTask, setShowNewTask] = useState(false);
-  const currentUser = users[0]; // Por ahora usamos el primer usuario
+
+  // Obtener el ID del usuario actual del localStorage
+  const currentUserId = Number(localStorage.getItem("currentUserId"));
+  const currentUser = users.find(user => user.id === currentUserId) || users[0];
 
   return (
     <div className="border-b px-6 py-3">

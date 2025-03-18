@@ -40,6 +40,7 @@ export function useWebSocket(userId?: number, userName?: string) {
             });
           }
           break;
+        // No necesitamos manejar CHAT_MESSAGE aquí ya que lo maneja ChatPanel
       }
     };
 
