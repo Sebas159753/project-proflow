@@ -2,7 +2,7 @@ import { TaskCard } from "./task-card";
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
 import { useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
-import { TaskStatus, type Task, type User } from "@shared/schema";
+import { TaskStatus, TaskPriority, type Task, type User } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
 import { motion } from "framer-motion";
 import { useState, useMemo } from "react";
@@ -24,6 +24,14 @@ const columns = [
   { id: TaskStatus.COMPLETED, title: "Completed", className: "bg-blue-800" }
 ];
 
+// Orden de prioridades para el ordenamiento
+const priorityOrder = {
+  [TaskPriority.URGENT]: 0,
+  [TaskPriority.HIGH]: 1,
+  [TaskPriority.MEDIUM]: 2,
+  [TaskPriority.LOW]: 3,
+};
+
 export function KanbanBoard({ tasks, users }: KanbanBoardProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const queryClient = useQueryClient();
@@ -44,7 +52,17 @@ export function KanbanBoard({ tasks, users }: KanbanBoardProps) {
   }, [searchQuery, tasks, fuse]);
 
   const getTasksByStatus = (status: string) => {
-    return filteredTasks.filter(task => task.status === status);
+    // Filtrar tareas por estado y ordenar por prioridad
+    return filteredTasks
+      .filter(task => task.status === status)
+      .sort((a, b) => {
+        // Ordenar primero por prioridad
+        const priorityDiff = priorityOrder[a.priority] - priorityOrder[b.priority];
+        if (priorityDiff !== 0) return priorityDiff;
+
+        // Si tienen la misma prioridad, ordenar por fecha de vencimiento
+        return new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime();
+      });
   };
 
   const onDragEnd = async (result: any) => {
