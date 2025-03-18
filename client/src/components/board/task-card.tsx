@@ -2,17 +2,15 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { format } from "date-fns";
 import { TaskStatus, type Task, type User, TaskPriority } from "@shared/schema";
-import { PomodoroTimer } from "../pomodoro/pomodoro-timer";
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Timer, Trash2, Edit } from "lucide-react";
+import { Trash2 } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
 import { motion, AnimatePresence } from "framer-motion";
 import { Slider } from "@/components/ui/slider";
-import { EditTaskDialog } from "../dialogs/edit-task-dialog";
 import { usePoints } from "@/hooks/use-points";
 import { useWebSocket } from "@/hooks/use-websocket";
 
@@ -39,10 +37,8 @@ const getPriorityColor = (priority: string) => {
 const EMOJIS = ["🎉", "🎊", "✨", "🌟", "💫", "🎯"];
 
 export function TaskCard({ task, users }: TaskCardProps) {
-  const [showPomodoro, setShowPomodoro] = useState(false);
   const [progress, setProgress] = useState(task.progress);
   const [isUpdating, setIsUpdating] = useState(false);
-  const [showEditDialog, setShowEditDialog] = useState(false);
   const [showCelebration, setShowCelebration] = useState(false);
   const queryClient = useQueryClient();
   const { toast } = useToast();
@@ -52,7 +48,7 @@ export function TaskCard({ task, users }: TaskCardProps) {
   useEffect(() => {
     if (progress === 100 && !showCelebration) {
       setShowCelebration(true);
-      setTimeout(() => setShowCelebration(false), 3000); // Hide after 3 seconds
+      setTimeout(() => setShowCelebration(false), 3000);
     }
   }, [progress]);
 
@@ -113,7 +109,7 @@ export function TaskCard({ task, users }: TaskCardProps) {
     try {
       await apiRequest(`/api/tasks/${task.id}`, {
         method: 'DELETE',
-        body: {} 
+        body: {}
       });
 
       await queryClient.invalidateQueries({ queryKey: ["/api/tasks"] });
@@ -132,8 +128,6 @@ export function TaskCard({ task, users }: TaskCardProps) {
       });
     }
   };
-
-  const activeUserId = task.assignedUserIds[0];
 
   return (
     <motion.div
@@ -155,24 +149,14 @@ export function TaskCard({ task, users }: TaskCardProps) {
                 {task.priority}
               </Badge>
             </div>
-            <div className="flex gap-2">
-              <Button
-                variant="ghost"
-                size="sm"
-                className="text-blue-500 hover:text-blue-700 hover:bg-blue-100 transition-colors duration-200"
-                onClick={() => setShowEditDialog(true)}
-              >
-                <Edit className="h-4 w-4" />
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="text-red-500 hover:text-red-700 hover:bg-red-100 transition-colors duration-200"
-                onClick={handleDelete}
-              >
-                <Trash2 className="h-4 w-4" />
-              </Button>
-            </div>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="text-red-500 hover:text-red-700 hover:bg-red-100 transition-colors duration-200"
+              onClick={handleDelete}
+            >
+              <Trash2 className="h-4 w-4" />
+            </Button>
           </div>
 
           <p className="text-sm text-muted-foreground mb-4">
@@ -197,28 +181,6 @@ export function TaskCard({ task, users }: TaskCardProps) {
                 />
               </div>
             </div>
-
-            {task.status === TaskStatus.IN_PROGRESS && (
-              <div className="space-y-2">
-                {!showPomodoro ? (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="w-full transition-colors duration-200"
-                    onClick={() => setShowPomodoro(true)}
-                  >
-                    <Timer className="h-4 w-4 mr-2" />
-                    Iniciar Pomodoro
-                  </Button>
-                ) : (
-                  <PomodoroTimer
-                    taskId={task.id}
-                    userId={activeUserId}
-                    onComplete={handleProgressChange}
-                  />
-                )}
-              </div>
-            )}
 
             <div className="flex items-center justify-between">
               <div className="text-sm text-muted-foreground">
@@ -268,13 +230,6 @@ export function TaskCard({ task, users }: TaskCardProps) {
           </div>
         )}
       </AnimatePresence>
-
-      <EditTaskDialog
-        task={task}
-        users={users}
-        open={showEditDialog}
-        onOpenChange={setShowEditDialog}
-      />
     </motion.div>
   );
 }
