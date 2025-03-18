@@ -8,30 +8,21 @@ import {
 } from "@/components/ui/card";
 import { Sidebar } from "@/components/layout/sidebar";
 import {
-  LineChart,
-  Line,
+  BarChart,
+  Bar,
   XAxis,
   YAxis,
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
-  BarChart,
-  Bar,
   PieChart,
   Pie,
   Cell,
 } from "recharts";
-import { format, startOfWeek, eachDayOfInterval, subDays } from "date-fns";
-import { es } from "date-fns/locale";
-import { useWebSocket } from "@/hooks/use-websocket";
 import { TaskStatus, TaskPriority } from "@shared/schema";
-import { useEffect } from "react";
+import { useWebSocket } from "@/hooks/use-websocket";
 
 export default function Reporting() {
-  const { data: sessions, isLoading: sessionsLoading } = useQuery({
-    queryKey: ["/api/pomodoro-sessions"],
-  });
-
   const { data: tasks, isLoading: tasksLoading } = useQuery({
     queryKey: ["/api/tasks"],
   });
@@ -40,37 +31,11 @@ export default function Reporting() {
     queryKey: ["/api/users"],
   });
 
-  const isLoading = sessionsLoading || tasksLoading || usersLoading;
+  const isLoading = tasksLoading || usersLoading;
 
   if (isLoading) {
     return <div>Cargando...</div>;
   }
-
-  // Estadísticas diarias de pomodoros
-  const dailyStats = sessions.reduce((acc: any, session: any) => {
-    const date = format(new Date(session.startTime), "yyyy-MM-dd");
-    if (!acc[date]) {
-      acc[date] = { date, completed: 0, total: 0 };
-    }
-    acc[date].total++;
-    if (session.completed) {
-      acc[date].completed++;
-    }
-    return acc;
-  }, {});
-
-  // Últimos 7 días
-  const last7Days = eachDayOfInterval({
-    start: subDays(new Date(), 6),
-    end: new Date(),
-  }).map(date => format(date, "yyyy-MM-dd"));
-
-  // Datos para gráficos de pomodoros
-  const dailyData = last7Days.map(date => ({
-    date: format(new Date(date), "EEE", { locale: es }),
-    completados: dailyStats[date]?.completed || 0,
-    total: dailyStats[date]?.total || 0,
-  }));
 
   // Estadísticas de tareas por estado
   const tasksByStatus = tasks.reduce((acc: any, task: any) => {
@@ -152,7 +117,7 @@ export default function Reporting() {
           </Card>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {/* Distribución de Tareas */}
           <Card>
             <CardHeader>
@@ -201,63 +166,6 @@ export default function Reporting() {
                     <Bar dataKey="completedTasks" name="Completadas" fill="#4ade80" />
                     <Bar dataKey="inProgressTasks" name="En Progreso" fill="#60a5fa" />
                   </BarChart>
-                </ResponsiveContainer>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Gráficos de Pomodoro */}
-        <div className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Pomodoros Diarios</CardTitle>
-              <CardDescription>Últimos 7 días</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="h-[300px]">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={dailyData}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="date" />
-                    <YAxis />
-                    <Tooltip />
-                    <Bar dataKey="completados" name="Completados" fill="#4ade80" />
-                    <Bar dataKey="total" name="Total" fill="#94a3b8" />
-                  </BarChart>
-                </ResponsiveContainer>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Tendencia de Productividad</CardTitle>
-              <CardDescription>Pomodoros completados vs iniciados</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="h-[300px]">
-                <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={dailyData}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="date" />
-                    <YAxis />
-                    <Tooltip />
-                    <Line
-                      type="monotone"
-                      dataKey="completados"
-                      name="Completados"
-                      stroke="#4ade80"
-                      strokeWidth={2}
-                    />
-                    <Line
-                      type="monotone"
-                      dataKey="total"
-                      name="Total"
-                      stroke="#94a3b8"
-                      strokeWidth={2}
-                    />
-                  </LineChart>
                 </ResponsiveContainer>
               </div>
             </CardContent>

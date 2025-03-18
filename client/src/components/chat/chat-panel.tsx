@@ -25,7 +25,27 @@ export function ChatPanel({ currentUser }: ChatPanelProps) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [newMessage, setNewMessage] = useState('');
   const scrollRef = useRef<HTMLDivElement>(null);
-  const { sendMessage } = useWebSocket(currentUser.id, currentUser.name);
+  const { sendMessage, socket } = useWebSocket(currentUser.id, currentUser.name);
+
+  useEffect(() => {
+    // Función para manejar mensajes recibidos
+    const handleMessage = (event: MessageEvent) => {
+      const message = JSON.parse(event.data);
+      if (message.type === 'CHAT_MESSAGE') {
+        setMessages(prev => [...prev, message.payload]);
+      }
+    };
+
+    if (socket.current) {
+      socket.current.addEventListener('message', handleMessage);
+    }
+
+    return () => {
+      if (socket.current) {
+        socket.current.removeEventListener('message', handleMessage);
+      }
+    };
+  }, [socket]);
 
   useEffect(() => {
     // Scroll al último mensaje
@@ -63,7 +83,7 @@ export function ChatPanel({ currentUser }: ChatPanelProps) {
       <div className="p-4 border-b">
         <h2 className="text-lg font-semibold">Chat de Equipo</h2>
       </div>
-      
+
       <ScrollArea ref={scrollRef} className="flex-1 p-4">
         <div className="space-y-4">
           {messages.map((message) => (

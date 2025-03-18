@@ -32,14 +32,13 @@ export function useWebSocket(userId?: number, userName?: string) {
         case 'TASK_UPDATE':
           // Refrescar los datos de las tareas y mostrar notificación
           queryClient.invalidateQueries({ queryKey: ['/api/tasks'] });
-          queryClient.invalidateQueries({ queryKey: ['/api/users'] }); // Para actualizar puntos y niveles
-          toast({
-            title: 'Actualización de tarea',
-            description: `${message.sender.name} ha actualizado una tarea`,
-          });
-          break;
-        case 'CHAT_MESSAGE':
-          // Las actualizaciones del chat son manejadas por el ChatPanel
+          queryClient.invalidateQueries({ queryKey: ['/api/users'] });
+          if (message.sender.id !== userId) {
+            toast({
+              title: 'Actualización de tarea',
+              description: `${message.sender.name} ha actualizado una tarea`,
+            });
+          }
           break;
       }
     };
@@ -63,5 +62,5 @@ export function useWebSocket(userId?: number, userName?: string) {
     }
   }, []);
 
-  return { sendMessage };
+  return { sendMessage, socket };
 }
