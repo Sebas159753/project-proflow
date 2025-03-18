@@ -9,7 +9,7 @@ import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { NewTaskDialog } from "@/components/dialogs/new-task-dialog";
 import { Badge } from "@/components/ui/badge";
-import type { Task, User, TaskPriority } from "@shared/schema";
+import { TaskPriority, type Task, type User } from "@shared/schema";
 
 const getPriorityColor = (priority: string) => {
   switch (priority) {
