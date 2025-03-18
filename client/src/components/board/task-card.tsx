@@ -11,7 +11,6 @@ import { useToast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
 import { motion, AnimatePresence } from "framer-motion";
 import { Slider } from "@/components/ui/slider";
-import { usePoints } from "@/hooks/use-points";
 import { useWebSocket } from "@/hooks/use-websocket";
 import {
   Select,
@@ -50,7 +49,6 @@ export function TaskCard({ task, users }: TaskCardProps) {
   const [showCelebration, setShowCelebration] = useState(false);
   const queryClient = useQueryClient();
   const { toast } = useToast();
-  const { awardPoints } = usePoints();
   const { sendMessage } = useWebSocket();
 
   useEffect(() => {
@@ -92,13 +90,6 @@ export function TaskCard({ task, users }: TaskCardProps) {
         timestamp: new Date().toISOString()
       });
 
-      // Si la tarea se completó, otorgar puntos
-      if (newStatus === TaskStatus.COMPLETED) {
-        const userId = task.assignedUserIds[0];
-        if (userId) {
-          await awardPoints(task, userId);
-        }
-      }
 
       await queryClient.invalidateQueries({ queryKey: ["/api/tasks"] });
 
@@ -146,14 +137,6 @@ export function TaskCard({ task, users }: TaskCardProps) {
         },
         timestamp: new Date().toISOString()
       });
-
-      // Si el progreso llegó al 100%, otorgar puntos
-      if (progressValue === 100) {
-        const userId = task.assignedUserIds[0];
-        if (userId) {
-          await awardPoints(task, userId);
-        }
-      }
 
       await queryClient.invalidateQueries({ queryKey: ["/api/tasks"] });
 
