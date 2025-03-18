@@ -1,4 +1,3 @@
-
 import { QueryClient, QueryFunction } from "@tanstack/react-query";
 
 async function throwIfResNotOk(res: Response) {
@@ -9,39 +8,14 @@ async function throwIfResNotOk(res: Response) {
 }
 
 export async function apiRequest(
-  urlOrOptions: string | { url: string; method: string; body?: unknown },
-  methodOrData?: string | unknown,
+  method: string,
+  url: string,
   data?: unknown | undefined,
 ): Promise<Response> {
-  // Manejar diferentes formatos de llamada
-  let url: string;
-  let method: string;
-  let body: unknown | undefined;
-
-  if (typeof urlOrOptions === 'string') {
-    // Formato viejo: apiRequest(method, url, data)
-    if (typeof methodOrData === 'string') {
-      url = urlOrOptions;
-      method = methodOrData;
-      body = data;
-    } 
-    // Formato nuevo: apiRequest(url, { method, body })
-    else {
-      url = urlOrOptions;
-      method = (methodOrData as { method: string })?.method || 'GET';
-      body = (methodOrData as { body?: unknown })?.body;
-    }
-  } else {
-    // Formato de objeto: apiRequest({ url, method, body })
-    url = urlOrOptions.url;
-    method = urlOrOptions.method;
-    body = urlOrOptions.body;
-  }
-
   const res = await fetch(url, {
     method,
-    headers: body ? { "Content-Type": "application/json" } : {},
-    body: body ? JSON.stringify(body) : undefined,
+    headers: data ? { "Content-Type": "application/json" } : {},
+    body: data ? JSON.stringify(data) : undefined,
     credentials: "include",
   });
 

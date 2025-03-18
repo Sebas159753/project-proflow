@@ -11,21 +11,6 @@ export default function Dashboard() {
 
   const { data: users, isLoading: usersLoading } = useQuery({
     queryKey: ["/api/users"],
-    queryFn: async () => {
-      try {
-        const response = await fetch('/api/users');
-        if (!response.ok) {
-          throw new Error('Network response was not ok');
-        }
-        const data = await response.json();
-        console.log("Datos de usuarios cargados:", data);
-        return data || []; 
-      } catch (error) {
-        console.error("Error al cargar usuarios:", error);
-        return []; 
-      }
-    },
-    initialData: [] 
   });
 
   if (tasksLoading || usersLoading) {

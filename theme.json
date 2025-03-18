@@ -1,6 +1,6 @@
 {
   "variant": "professional",
-  "primary": "hsl(209 83% 26%)",
+  "primary": "hsl(222.2 47.4% 11.2%)",
   "appearance": "light",
   "radius": 0.5,
   "accessibility": {
@@ -8,15 +8,15 @@
     "colors": {
       "light": {
         "background": "hsl(0 0% 100%)",
-        "foreground": "hsl(200 16% 18%)",
-        "primary": "hsl(216 89% 34%)",
-        "border": "hsl(210 15% 94%)"
+        "foreground": "hsl(0 0% 0%)",
+        "primary": "hsl(222.2 47.4% 11.2%)",
+        "border": "hsl(0 0% 0%)"
       },
       "dark": {
-        "background": "hsl(200 16% 18%)",
+        "background": "hsl(0 0% 0%)",
         "foreground": "hsl(0 0% 100%)",
-        "primary": "hsl(210 79% 54%)",
-        "border": "hsl(216 89% 34%)"
+        "primary": "hsl(0 0% 100%)",
+        "border": "hsl(0 0% 100%)"
       }
     }
   }

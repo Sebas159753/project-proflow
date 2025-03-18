@@ -17,10 +17,10 @@ interface KanbanBoardProps {
 
 // Definir el orden específico de las columnas
 const columns = [
-  { id: TaskStatus.TODO, title: "To-Do", className: "bg-[#E3F2FD]" },
-  { id: TaskStatus.IN_PROGRESS, title: "On Progress", className: "bg-[#094780]" },
-  { id: TaskStatus.REVIEW, title: "Under Review", className: "bg-[#1976D2]" },
-  { id: TaskStatus.COMPLETED, title: "Completed", className: "bg-[#01579B]" }
+  { id: TaskStatus.TODO, title: "To-Do", className: "bg-[#EDF6FF]" },
+  { id: TaskStatus.IN_PROGRESS, title: "On Progress", className: "bg-[#CCE5FF]" },
+  { id: TaskStatus.REVIEW, title: "Under Review", className: "bg-[#66B2FF]" },
+  { id: TaskStatus.COMPLETED, title: "Completed", className: "bg-blue-800" }
 ];
 
 export function KanbanBoard({ tasks, users }: KanbanBoardProps) {
@@ -53,11 +53,8 @@ export function KanbanBoard({ tasks, users }: KanbanBoardProps) {
     const newStatus = destination.droppableId;
 
     try {
-      await fetch(`/api/tasks/${taskId}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status: newStatus }),
-        credentials: 'include'
+      await apiRequest("PATCH", `/api/tasks/${taskId}`, {
+        status: newStatus
       });
 
       queryClient.invalidateQueries({ queryKey: ["/api/tasks"] });
@@ -99,9 +96,9 @@ export function KanbanBoard({ tasks, users }: KanbanBoardProps) {
               transition={{ duration: 0.3, delay: index * 0.1 }}
               className={`rounded-lg p-4 transition-all duration-300 hover:shadow-lg ${column.className}`}
             >
-              <h3 className={`font-semibold mb-4 flex items-center ${column.id === TaskStatus.TODO ? 'text-gray-800' : 'text-white'}`}>
+              <h3 className={`font-semibold mb-4 flex items-center ${column.id === TaskStatus.COMPLETED ? 'text-white' : 'text-gray-800'}`}>
                 {column.title}
-                <span className={`ml-2 text-sm ${column.id === TaskStatus.TODO ? 'text-gray-600' : 'text-white/70'}`}>
+                <span className={`ml-2 text-sm ${column.id === TaskStatus.COMPLETED ? 'text-white/70' : 'text-gray-600'}`}>
                   ({getTasksByStatus(column.id).length})
                 </span>
               </h3>

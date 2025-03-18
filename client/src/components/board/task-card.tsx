@@ -12,8 +12,8 @@ import { useToast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
 import { motion, AnimatePresence } from "framer-motion";
 import { Slider } from "@/components/ui/slider";
+import { EditTaskDialog } from "../dialogs/edit-task-dialog";
 import { usePoints } from "@/hooks/use-points";
-import { cn } from "@/lib/utils";
 
 interface TaskCardProps {
   task: Task;
@@ -41,6 +41,7 @@ export function TaskCard({ task, users }: TaskCardProps) {
   const [showPomodoro, setShowPomodoro] = useState(false);
   const [progress, setProgress] = useState(task.progress);
   const [isUpdating, setIsUpdating] = useState(false);
+  const [showEditDialog, setShowEditDialog] = useState(false);
   const [showCelebration, setShowCelebration] = useState(false);
   const queryClient = useQueryClient();
   const { toast } = useToast();
@@ -53,70 +54,71 @@ export function TaskCard({ task, users }: TaskCardProps) {
     }
   }, [progress]);
 
-  // Asegurarnos de que task.assignedUserIds es un array
-  const assignedUsers = Array.isArray(users) && Array.isArray(task.assignedUserIds) 
-    ? users.filter(user => task.assignedUserIds.includes(user.id))
-    : [];
-  
-  // Log para depuración
-  useEffect(() => {
-    console.log("TaskCard - ID de tarea:", task.id);
-    console.log("TaskCard - Usuarios disponibles:", users);
-    console.log("TaskCard - IDs de usuarios asignados:", task.assignedUserIds);
-    console.log("TaskCard - Usuarios asignados filtrados:", assignedUsers);
-  }, [task, users]);
+  const assignedUsers = users.filter(user =>
+    task.assignedUserIds.includes(user.id)
+  );
 
-  const handleProgressChange = async (value: number[]) => {
-    const progressValue = value[0];
-    if (progressValue === progress) return;
-
+  const handleProgressChange = async (newValue: number[]) => {
+    const progressValue = newValue[0];
     setProgress(progressValue);
     setIsUpdating(true);
 
     try {
-      await fetch(`/api/tasks/${task.id}`, {
+      await apiRequest(`/api/tasks/${task.id}`, {
         method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
+        body: {
           progress: progressValue,
           status: progressValue === 100 ? TaskStatus.COMPLETED : task.status
-        }),
-        credentials: 'include'
+        }
       });
 
       // Si la tarea se completó, otorgar puntos al usuario asignado
       if (progressValue === 100 && task.status !== TaskStatus.COMPLETED) {
-        awardPoints(10, 'Tarea completada');
+        const userId = task.assignedUserIds[0]; // Por ahora usamos el primer usuario asignado
+        if (userId) {
+          await awardPoints(task, userId);
+        }
       }
 
-      await queryClient.invalidateQueries({ queryKey: ["tasks"] });
-    } catch (error) {
-      console.error("Error al actualizar el progreso:", error);
+      await queryClient.invalidateQueries({ queryKey: ["/api/tasks"] });
+
       toast({
-        title: "Error",
-        description: "No se pudo actualizar el progreso de la tarea",
-        variant: "destructive"
+        title: "¡Éxito!",
+        description: "Progreso actualizado correctamente",
+        className: "bg-green-500 text-white"
       });
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "No se pudo actualizar el progreso"
+      });
+      setProgress(task.progress); // Revertir al valor original si hay error
     } finally {
       setIsUpdating(false);
     }
   };
 
-  const handleDeleteTask = async () => {
+  const handleDelete = async () => {
     try {
-      await apiRequest('DELETE', `/api/tasks/${task.id}`);
-      await queryClient.invalidateQueries({ queryKey: ["tasks"] });
+      await apiRequest(`/api/tasks/${task.id}`, {
+        method: 'DELETE',
+        body: {} // Añadimos un cuerpo vacío para asegurar que la llamada se procese correctamente
+      });
+
+      await queryClient.invalidateQueries({ queryKey: ["/api/tasks"] });
 
       toast({
-        title: "Tarea eliminada",
-        description: "La tarea ha sido eliminada correctamente",
+        title: "¡Éxito!",
+        description: "Tarea eliminada correctamente",
+        className: "bg-green-500 text-white"
       });
     } catch (error) {
-      console.error("Error al eliminar la tarea:", error);
+      console.error('Error al eliminar la tarea:', error);
       toast({
+        variant: "destructive",
         title: "Error",
-        description: "No se pudo eliminar la tarea",
-        variant: "destructive"
+        description: "No se pudo eliminar la tarea"
       });
     }
   };
@@ -147,34 +149,43 @@ export function TaskCard({ task, users }: TaskCardProps) {
               <Button
                 variant="ghost"
                 size="sm"
+                className="text-blue-500 hover:text-blue-700 hover:bg-blue-100 transition-colors duration-200"
+                onClick={() => setShowEditDialog(true)}
+              >
+                <Edit className="h-4 w-4" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
                 className="text-red-500 hover:text-red-700 hover:bg-red-100 transition-colors duration-200"
-                onClick={handleDeleteTask}
+                onClick={handleDelete}
               >
                 <Trash2 className="h-4 w-4" />
               </Button>
             </div>
           </div>
 
-          <div className="space-y-4">
-            <p className="text-sm text-muted-foreground line-clamp-2">
-              {task.description}
-            </p>
+          <p className="text-sm text-muted-foreground mb-4">
+            {task.description}
+          </p>
 
-            <div className="space-y-1">
-              <div className="flex justify-between items-center text-sm">
-                <span>Progreso: {progress}%</span>
+          <div className="space-y-4">
+            <div>
+              <div className="flex justify-between text-sm mb-1">
+                <span>Progreso</span>
+                <span>{progress}%</span>
               </div>
-              <Slider
-                defaultValue={[progress]}
-                max={100}
-                step={10}
-                onValueChange={handleProgressChange}
-                className={cn(
-                  "cursor-pointer transition-opacity duration-200",
-                  isUpdating ? "opacity-50 pointer-events-none" : ""
-                )}
-                disabled={isUpdating}
-              />
+              <div className="space-y-2">
+                <Progress value={progress} className="transition-all duration-500" />
+                <Slider
+                  defaultValue={[progress]}
+                  max={100}
+                  step={25}
+                  className="cursor-pointer"
+                  onValueChange={handleProgressChange}
+                  disabled={isUpdating}
+                />
+              </div>
             </div>
 
             {task.status === TaskStatus.IN_PROGRESS && (
@@ -247,6 +258,13 @@ export function TaskCard({ task, users }: TaskCardProps) {
           </div>
         )}
       </AnimatePresence>
+
+      <EditTaskDialog
+        task={task}
+        users={users}
+        open={showEditDialog}
+        onOpenChange={setShowEditDialog}
+      />
     </motion.div>
   );
 }
