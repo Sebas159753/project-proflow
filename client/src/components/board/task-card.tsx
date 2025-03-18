@@ -61,20 +61,26 @@ export function TaskCard({ task, users }: TaskCardProps) {
     setIsUpdating(true);
 
     try {
-      const updatedTask = await apiRequest('/api/tasks/' + task.id, {
+      // Actualizar la tarea
+      const response = await apiRequest('/api/tasks', {
         method: 'PATCH',
-        body: JSON.stringify({
+        url: `/api/tasks/${task.id}`,
+        body: {
           progress: progressValue,
           status: progressValue === 100 ? TaskStatus.COMPLETED : task.status
-        })
+        }
       });
+
+      if (!response) {
+        throw new Error('No se recibió respuesta del servidor');
+      }
 
       setProgress(progressValue);
 
       // Notificar a otros usuarios sobre el cambio
       sendMessage({
         type: 'TASK_UPDATE',
-        payload: updatedTask,
+        payload: response,
         sender: { 
           id: task.assignedUserIds[0], 
           name: assignedUsers[0]?.name || 'Usuario' 
@@ -112,9 +118,9 @@ export function TaskCard({ task, users }: TaskCardProps) {
 
   const handleDelete = async () => {
     try {
-      await apiRequest('/api/tasks/' + task.id, {
+      await apiRequest('/api/tasks', {
         method: 'DELETE',
-        body: JSON.stringify({})
+        url: `/api/tasks/${task.id}`
       });
 
       await queryClient.invalidateQueries({ queryKey: ["/api/tasks"] });
