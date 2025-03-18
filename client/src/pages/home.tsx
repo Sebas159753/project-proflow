@@ -25,11 +25,11 @@ export default function Home() {
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-6 pt-6">
           <div className="flex justify-center w-full">
-            <div className="w-64 h-24 relative flex items-center justify-center">
+            <div className="w-48 h-20 flex items-center justify-center">
               <img 
-                src="/attached_assets/Logo BVQ Color.png" 
-                alt="BVQ Logo"
-                className="max-w-full max-h-full w-auto h-auto object-contain"
+                src="/attached_assets/Powerby INFOLAB.PNG" 
+                alt="Infolab Logo"
+                className="w-full h-full object-contain"
               />
             </div>
           </div>
