@@ -100,10 +100,6 @@ export default function People() {
       <div className="flex-1 p-8">
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-2xl font-bold">Gestión de Personas</h1>
-          <Button onClick={() => setShowAddPerson(true)} className="bg-blue-600 hover:bg-blue-700 text-white">
-            <Plus className="h-4 w-4 mr-2" />
-            Agregar Persona
-          </Button>
         </div>
 
         <AnimatePresence mode="wait">
