@@ -27,13 +27,21 @@ export function useWebSocket(userId?: number, userName?: string) {
         console.log('Enviando mensaje de conexión inicial:', initialMessage);
         socket.current.send(JSON.stringify(initialMessage));
 
-        // Send ping to verify connection
-        socket.current.send(JSON.stringify({
-          type: 'PING',
-          payload: 'ping',
-          sender: { id: userId, name: userName },
-          timestamp: new Date().toISOString()
-        }));
+        // Send ping to verify connection - Now with a longer interval
+        const pingInterval = setInterval(() => {
+          if (socket.current?.readyState === WebSocket.OPEN) {
+            socket.current.send(JSON.stringify({
+              type: 'PING',
+              payload: 'ping',
+              sender: { id: userId, name: userName },
+              timestamp: new Date().toISOString()
+            }));
+          }
+        }, 120000); // Ping every 2 minutes
+
+        //Clean up interval on close
+        socket.current.onclose = () => {clearInterval(pingInterval)};
+
       }
     };
 

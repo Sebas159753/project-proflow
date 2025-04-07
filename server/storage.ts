@@ -53,6 +53,10 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createUser(user: { name: string }): Promise<User> {
+    const currentUsers = await this.getUsers();
+    if (currentUsers.length >= 3) {
+      throw new Error("Límite máximo de 3 usuarios alcanzado");
+    }
     const [newUser] = await db.insert(users).values(user).returning();
     return newUser;
   }

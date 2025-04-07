@@ -111,15 +111,12 @@ class WebSocketHandler {
   }
 
   private broadcast(message: WebSocketMessage) {
-    console.log('Transmitiendo mensaje a todos los clientes. Tipo:', message.type);
-    let clientCount = 0;
+    if (this.wss.clients.size > 3) return; // No transmitir si hay más de 3 conexiones
     this.wss.clients.forEach(client => {
       if (client.readyState === WebSocket.OPEN) {
         client.send(JSON.stringify(message));
-        clientCount++;
       }
     });
-    console.log(`Mensaje transmitido a ${clientCount} clientes`);
   }
 }
 
