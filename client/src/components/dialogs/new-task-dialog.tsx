@@ -10,6 +10,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { TaskStatus, TaskPriority, insertTaskSchema, type User } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
+import { playNotificationSound } from "@/lib/sounds";
 import { MultiSelect } from "@/components/ui/multi-select";
 
 interface NewTaskDialogProps {
@@ -52,6 +53,9 @@ export function NewTaskDialog({ open, onOpenChange, users }: NewTaskDialogProps)
       queryClient.setQueryData(['/api/tasks'], (oldData: any) => {
         return oldData ? [...oldData, newTask] : [newTask];
       });
+
+      // Reproducir sonido al crear la tarea
+      playNotificationSound();
 
       // Invalidar la consulta para asegurarnos de tener los datos más recientes
       await queryClient.invalidateQueries({ queryKey: ['/api/tasks'] });

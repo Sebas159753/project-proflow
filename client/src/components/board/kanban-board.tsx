@@ -6,6 +6,7 @@ import { TaskStatus, TaskPriority, type Task, type User } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
 import { motion } from "framer-motion";
 import { useState, useMemo } from "react";
+import { playNotificationSound } from "@/lib/sounds";
 import { Input } from "@/components/ui/input";
 import { Search } from "lucide-react";
 import Fuse from 'fuse.js';
@@ -99,6 +100,9 @@ export function KanbanBoard({ tasks, users }: KanbanBoardProps) {
 
       // Actualizar la caché local
       queryClient.invalidateQueries({ queryKey: ["/api/tasks"] });
+      
+      // Reproducir sonido al mover la tarea
+      playNotificationSound();
 
       toast({
         title: "¡Tarea actualizada!",
