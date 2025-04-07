@@ -18,9 +18,9 @@ interface KanbanBoardProps {
 
 // Definir el orden específico de las columnas
 const columns = [
-  { id: TaskStatus.TODO, title: "To-Do", className: "bg-blue-25 text-white" },
-  { id: TaskStatus.IN_PROGRESS, title: "On Progress", className: "bg-blue-25 text-white" },
-  { id: TaskStatus.REVIEW, title: "Under Review", className: "bg-blue-25 text-white" },
+  { id: TaskStatus.TODO, title: "To-Do", className: "bg-blue-20 text-white" },
+  { id: TaskStatus.IN_PROGRESS, title: "On Progress", className: "bg-blue-20 text-white" },
+  { id: TaskStatus.REVIEW, title: "Under Review", className: "bg-blue-20 text-white" },
   { id: TaskStatus.COMPLETED, title: "Completed", className: "bg-blue-900 text-white" }
 ];
 
@@ -135,7 +135,7 @@ export function KanbanBoard({ tasks, users }: KanbanBoardProps) {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.3, delay: index * 0.1 }}
-              className={`rounded-lg p-4 transition-all duration-300 hover:shadow-lg border-2 border-black ${column.className}`}
+              className={`rounded-lg p-4 transition-all duration-300 hover:shadow-lg border border-black ${column.className}`}
             >
               <h3 className={`font-semibold mb-4 flex items-center ${column.id === TaskStatus.COMPLETED ? 'text-white' : 'text-gray-800'}`}>
                 {column.title}

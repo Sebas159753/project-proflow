@@ -15,26 +15,30 @@ export function Header({ users }: HeaderProps) {
 
   // Obtener el ID del usuario actual del localStorage
   const currentUserId = Number(localStorage.getItem("currentUserId"));
-  const currentUser = users.find(user => user.id === currentUserId) || users[0];
+  const currentUser =
+    users.find((user) => user.id === currentUserId) || users[0];
 
   return (
     <div className="border-b px-6 py-3">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-semibold">¡Bienvenido {currentUser.name}!</h1>
+          <h1 className="text-xl font-semibold">¡Hola {currentUser.name}!</h1>
           <p className="text-sm text-muted-foreground">
             {format(new Date(), "d 'de' MMMM, yyyy", { locale: es })}
           </p>
         </div>
         <div className="flex items-center gap-6">
-          <Button onClick={() => setShowNewTask(true)} className="bg-blue-600 hover:bg-blue-700 text-white">
+          <Button
+            onClick={() => setShowNewTask(true)}
+            className="bg-blue-900 hover:bg-blue-900 text-white"
+          >
             <Plus className="h-4 w-4 mr-2" />
             Crear Tarea
           </Button>
         </div>
       </div>
-      <NewTaskDialog 
-        open={showNewTask} 
+      <NewTaskDialog
+        open={showNewTask}
         onOpenChange={setShowNewTask}
         users={users}
       />
