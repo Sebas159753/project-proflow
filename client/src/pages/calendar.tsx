@@ -43,12 +43,14 @@ export default function CalendarPage() {
   }
 
   const tasksForDate = (date: Date) => {
+    const previousDay = new Date(date);
+    previousDay.setDate(previousDay.getDate() - 1);
     return tasks.filter((task: Task) => {
       const taskDate = new Date(task.dueDate);
       return (
-        taskDate.getDate() === date.getDate() &&
-        taskDate.getMonth() === date.getMonth() &&
-        taskDate.getFullYear() === date.getFullYear()
+        taskDate.getDate() === previousDay.getDate() &&
+        taskDate.getMonth() === previousDay.getMonth() &&
+        taskDate.getFullYear() === previousDay.getFullYear()
       );
     });
   };
