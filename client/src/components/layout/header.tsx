@@ -16,7 +16,7 @@ export function Header({ users }: HeaderProps) {
   // Obtener el ID del usuario actual del localStorage
   const currentUserId = Number(localStorage.getItem("currentUserId"));
   const currentUser =
-    users.find((user) => user.id === currentUserId) || users[0];
+    users.find((user) => user.id === currentUserId) || users[0] || { name: 'Usuario' };
 
   return (
     <div className="border-b px-6 py-3">

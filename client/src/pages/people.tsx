@@ -39,13 +39,13 @@ export default function People() {
 
   async function handleAddPerson() {
     try {
-      await apiRequest("POST", "/api/users", {
+      const response = await apiRequest("POST", "/api/users", {
         name: newPerson.name,
       });
 
-      // Invalidar la caché y esperar a que se actualice
+      // Invalidar la caché y actualizar inmediatamente
       await queryClient.invalidateQueries({ queryKey: ["/api/users"] });
-      await queryClient.refetchQueries({ queryKey: ["/api/users"] });
+      await queryClient.setQueryData(["/api/users"], (oldData: any) => [...(oldData || []), response]);
 
       toast({
         title: "¡Éxito!",
