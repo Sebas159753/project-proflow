@@ -135,7 +135,7 @@ export function KanbanBoard({ tasks, users }: KanbanBoardProps) {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.3, delay: index * 0.1 }}
-              className={`rounded-lg p-4 transition-all duration-300 hover:shadow-lg ${column.className}`}
+              className={`rounded-lg p-4 transition-all duration-300 hover:shadow-lg border-2 border-black ${column.className}`}
             >
               <h3 className={`font-semibold mb-4 flex items-center ${column.id === TaskStatus.COMPLETED ? 'text-white' : 'text-gray-800'}`}>
                 {column.title}
