@@ -24,7 +24,7 @@ export default function Home() {
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
       <Card className="w-full max-w-md">
         <CardHeader>
-          <CardTitle className="text-2xl text-center">Hola</CardTitle>
+          <CardTitle className="text-2xl text-center">Bienvenido</CardTitle>
           <CardDescription className="text-center">
             Selecciona tu usuario para comenzar
           </CardDescription>
