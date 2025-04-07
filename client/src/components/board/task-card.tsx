@@ -258,7 +258,7 @@ export function TaskCard({ task, users }: TaskCardProps) {
                 Asignado a: {assignedUsers.map(user => user.name).join(', ')}
               </div>
               <div className="text-sm text-muted-foreground">
-                {format(new Date(task.dueDate), 'MMM d')}
+                {format(new Date(new Date(task.dueDate).setDate(new Date(task.dueDate).getDate() + 1)), 'MMM d')}
               </div>
             </div>
           </div>
