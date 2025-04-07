@@ -77,9 +77,12 @@ class WebSocketHandler {
     // Manejar actualizaciones de notas
     else if (message.type === 'NOTE_UPDATE') {
       console.log('Actualización de notas recibida de:', message.sender.name);
-      console.log('Nuevas notas:', message.payload.length, 'notas');
-      this.notes = message.payload; // Actualizar el estado de las notas
-      this.broadcast(message); // Transmitir a todos los clientes
+      // Solo actualizar y transmitir si hay cambios reales
+      if (JSON.stringify(this.notes) !== JSON.stringify(message.payload)) {
+        console.log('Nuevas notas:', message.payload.length, 'notas');
+        this.notes = message.payload; // Actualizar el estado de las notas
+        this.broadcast(message); // Transmitir a todos los clientes
+      }
     }
     // Responder al ping para verificar conexión
     else if (message.type === 'PING') {
