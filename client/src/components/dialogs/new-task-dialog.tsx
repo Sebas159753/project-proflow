@@ -30,7 +30,7 @@ export function NewTaskDialog({ open, onOpenChange, users }: NewTaskDialogProps)
       status: TaskStatus.TODO,
       priority: TaskPriority.LOW,
       progress: 0,
-      dueDate: new Date(new Date().setHours(0, 0, 0, 0)).toISOString(),
+      dueDate: new Date(new Date().setHours(12, 0, 0, 0)).toISOString(),
       assignedUserIds: [],
       pomodoroCount: 4,
       pomodoroDuration: 25,

@@ -35,7 +35,7 @@ export function EditTaskDialog({ task, users, open, onOpenChange }: EditTaskDial
     description: task.description,
     status: task.status,
     priority: task.priority,
-    dueDate: new Date(new Date(task.dueDate).setHours(0, 0, 0, 0)),
+    dueDate: new Date(new Date(task.dueDate).setHours(12, 0, 0, 0)),
     assignedUserIds: task.assignedUserIds,
     pomodoroCount: task.pomodoroCount,
     pomodoroDuration: task.pomodoroDuration,
@@ -53,7 +53,7 @@ export function EditTaskDialog({ task, users, open, onOpenChange }: EditTaskDial
         method: 'PATCH',
         body: {
           ...editedTask,
-          dueDate: new Date(editedTask.dueDate.setHours(0, 0, 0, 0)).toISOString()
+          dueDate: new Date(editedTask.dueDate.setHours(12, 0, 0, 0)).toISOString()
         }
       });
 
