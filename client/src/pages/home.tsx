@@ -9,7 +9,6 @@ export default function Home() {
   const [, setLocation] = useLocation();
   const { data: users, isLoading } = useQuery({
     queryKey: ["/api/users"],
-    refetchOnMount: true,
   });
 
   const selectUser = (userId: number) => {
