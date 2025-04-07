@@ -25,6 +25,17 @@ class WebSocketHandler {
 
   private setupWebSocket() {
     this.wss.on('connection', (ws: WebSocket) => {
+      // Evitar múltiples conexiones del mismo cliente
+      const existingClient = Array.from(this.clients.entries())
+        .find(([socket, client]) => 
+          client.userId === this.clients.get(ws)?.userId && socket !== ws);
+      
+      if (existingClient) {
+        console.log('Cliente existente reconectado, cerrando conexión anterior');
+        existingClient[0].close();
+        this.clients.delete(existingClient[0]);
+      }
+      
       console.log('Nueva conexión WebSocket establecida');
 
       // Send immediate ping to verify connection

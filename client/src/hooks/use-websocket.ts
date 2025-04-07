@@ -102,15 +102,24 @@ export function useWebSocket(userId?: number, userName?: string) {
     };
   }, [connect]);
 
-  const sendMessage = useCallback((message: WebSocketMessage) => {
-    if (socket.current?.readyState === WebSocket.OPEN) {
-      console.log('Enviando mensaje WebSocket:', message.type, 'payload:', message.payload);
-      socket.current.send(JSON.stringify(message));
-    } else {
-      console.warn('WebSocket no está conectado, intentando reconectar...');
-      connect();
-    }
-  }, [connect]);
+  const sendMessage = useCallback(
+    (() => {
+      let timeout: NodeJS.Timeout;
+      return (message: WebSocketMessage) => {
+        if (timeout) clearTimeout(timeout);
+        timeout = setTimeout(() => {
+          if (socket.current?.readyState === WebSocket.OPEN) {
+            console.log('Enviando mensaje WebSocket:', message.type, 'payload:', message.payload);
+            socket.current.send(JSON.stringify(message));
+          } else {
+            console.warn('WebSocket no está conectado, intentando reconectar...');
+            connect();
+          }
+        }, 300);
+      };
+    })(),
+    [connect]
+  );
 
   return { sendMessage, socket };
 }
